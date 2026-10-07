@@ -4,7 +4,6 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/openlabnetworks/opi-p4-sandbox)
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/openlabnetworks/opi-p4-sandbox)
 
 **A 1-click sandbox for experimenting with [OPI (Open Programmable Infrastructure)](https://opiproject.org) APIs and [P4](https://p4.org) programmable dataplanes — no hardware required.**
 
@@ -142,7 +141,6 @@ make smoke-test
 Don't want to install anything? Click a badge above to launch the sandbox in:
 
 - **GitHub Codespaces** — Full VS Code in your browser with the sandbox auto-started
-- **Gitpod** — Alternative cloud IDE with identical setup
 
 The sandbox starts automatically when the workspace opens. Ports are forwarded to your browser.
 
