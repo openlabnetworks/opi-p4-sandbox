@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgmp10 \
     libpcap0.8 \
     libnanomsg5 \
+    libjsoncpp25 \
     python3 \
     python3-pip \
     iproute2 \
