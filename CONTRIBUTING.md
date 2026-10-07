@@ -13,7 +13,7 @@ Thank you for your interest in contributing! This guide will help you get set up
 ### Clone and Build Locally
 
 ```bash
-git clone https://github.com/YOUR_ORG/opi-p4-sandbox.git
+git clone https://github.com/openlabnetworks/opi-p4-sandbox.git
 cd opi-p4-sandbox
 
 # Build images from source

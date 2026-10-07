@@ -1,10 +1,10 @@
 # 🚀 OPI & P4 Developer Sandbox
 
-[![Build & Publish](https://github.com/YOUR_ORG/opi-p4-sandbox/actions/workflows/build-publish.yml/badge.svg)](https://github.com/YOUR_ORG/opi-p4-sandbox/actions/workflows/build-publish.yml)
+[![Build & Publish](https://github.com/openlabnetworks/opi-p4-sandbox/actions/workflows/build-publish.yml/badge.svg)](https://github.com/openlabnetworks/opi-p4-sandbox/actions/workflows/build-publish.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/YOUR_ORG/opi-p4-sandbox)
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/YOUR_ORG/opi-p4-sandbox)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/openlabnetworks/opi-p4-sandbox)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/openlabnetworks/opi-p4-sandbox)
 
 **A 1-click sandbox for experimenting with [OPI (Open Programmable Infrastructure)](https://opiproject.org) APIs and [P4](https://p4.org) programmable dataplanes — no hardware required.**
 
@@ -53,7 +53,7 @@ This repository packages an **OPI API emulator** and a **P4 BMv2 software switch
 ### Step 1: Clone
 
 ```bash
-git clone https://github.com/YOUR_ORG/opi-p4-sandbox.git
+git clone https://github.com/openlabnetworks/opi-p4-sandbox.git
 cd opi-p4-sandbox
 ```
 
@@ -149,6 +149,9 @@ The sandbox starts automatically when the workspace opens. Ports are forwarded t
 ---
 
 ## 🔧 API Reference
+
+> [!NOTE]
+> **REST vs gRPC:** The official OPI APIs are gRPC and protobuf-based. To make this sandbox as accessible as possible without requiring users to install `grpcurl` or compile protobufs, the sandbox server provides a simplified REST/JSON emulator that mirrors the structure and naming conventions of the real OPI APIs.
 
 ### Endpoints
 
