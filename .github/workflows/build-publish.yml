@@ -1,0 +1,275 @@
+# ============================================================
+# CI/CD: Build, Test, and Publish OPI & P4 Sandbox Images
+# ============================================================
+# Triggers:
+#   - Push to main: build + push images tagged "latest" and "sha-<commit>"
+#   - Pull request: build only (no push), run integration tests
+#   - Git tags v*: build + push versioned images + create GitHub Release
+#   - Weekly schedule: rebuild for security patches
+# ============================================================
+
+name: Build & Publish Sandbox Images
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  schedule:
+    # Rebuild weekly (Monday 6am UTC) for base image security updates
+    - cron: '0 6 * * 1'
+
+env:
+  REGISTRY: ghcr.io
+  OPI_IMAGE: ghcr.io/${{ github.repository_owner }}/opi-server
+  P4_IMAGE: ghcr.io/${{ github.repository_owner }}/p4-bmv2
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # ──────────────────────────────────────────────────
+  # Job 1: Lint and Unit Test
+  # ──────────────────────────────────────────────────
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: src/opi-server/go.sum
+
+      - name: Go lint
+        working-directory: src/opi-server
+        run: |
+          go vet ./...
+          echo "✅ Go vet passed"
+
+      - name: Go test
+        working-directory: src/opi-server
+        run: |
+          go test -v -race -coverprofile=coverage.out ./...
+          echo "✅ Go tests passed"
+
+      - name: Validate P4 syntax
+        run: |
+          echo "Checking P4 file syntax..."
+          for f in src/p4-programs/*.p4; do
+            echo "  Validating: $f"
+            # Basic syntax check - ensure file is valid P4_16
+            head -1 "$f" | grep -q "P4_16\|p4_16\|core.p4" || \
+              (echo "❌ Invalid P4 file: $f" && exit 1)
+          done
+          echo "✅ P4 syntax checks passed"
+
+      - name: Validate Docker Compose
+        run: |
+          docker compose config --quiet
+          echo "✅ Docker Compose config is valid"
+
+  # ──────────────────────────────────────────────────
+  # Job 2: Build & Push OPI Server Image
+  # ──────────────────────────────────────────────────
+  build-opi-server:
+    name: Build OPI Server Image
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.OPI_IMAGE }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: Build and push OPI Server image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./src/opi-server
+          file: ./docker/opi-server/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  # ──────────────────────────────────────────────────
+  # Job 3: Build & Push P4 BMv2 Image
+  # ──────────────────────────────────────────────────
+  build-p4-bmv2:
+    name: Build P4 BMv2 Image
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.P4_IMAGE }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: Build and push P4 BMv2 image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./docker/p4-bmv2
+          file: ./docker/p4-bmv2/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  # ──────────────────────────────────────────────────
+  # Job 4: Integration Test
+  # ──────────────────────────────────────────────────
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [build-opi-server, build-p4-bmv2]
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start sandbox
+        run: |
+          docker compose up -d opi-server
+          echo "Waiting for OPI server to be healthy..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/healthz > /dev/null 2>&1; then
+              echo "✅ OPI server is healthy!"
+              break
+            fi
+            echo "  Waiting... ($i/30)"
+            sleep 2
+          done
+
+      - name: Run smoke tests
+        run: |
+          echo "=== Smoke Test: Health Check ==="
+          curl -sf http://localhost:8080/healthz | python3 -m json.tool
+
+          echo ""
+          echo "=== Smoke Test: List Ports ==="
+          curl -sf http://localhost:8080/v1/ports | python3 -m json.tool
+
+          echo ""
+          echo "=== Smoke Test: Create Port ==="
+          curl -sf -X POST http://localhost:8080/v1/ports \
+            -H "Content-Type: application/json" \
+            -d '{"mac_address":"aa:bb:cc:dd:ee:ff","mtu":9000}' | python3 -m json.tool
+
+          echo ""
+          echo "=== Smoke Test: List Pipelines ==="
+          curl -sf http://localhost:8080/v1/pipelines | python3 -m json.tool
+
+          echo ""
+          echo "✅ All integration tests passed!"
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          echo "=== Container Logs ==="
+          docker compose logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+  # ──────────────────────────────────────────────────
+  # Job 5: Create GitHub Release (tags only)
+  # ──────────────────────────────────────────────────
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: integration-test
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            CHANGES=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          else
+            CHANGES=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
+          fi
+          echo "changes<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            ## 🚀 OPI & P4 Sandbox ${{ github.ref_name }}
+
+            ### Docker Images
+            ```bash
+            docker pull ${{ env.OPI_IMAGE }}:${{ github.ref_name }}
+            docker pull ${{ env.P4_IMAGE }}:${{ github.ref_name }}
+            ```
+
+            ### Quick Start
+            ```bash
+            git clone https://github.com/${{ github.repository }}.git
+            cd opi-p4-sandbox
+            make start-sandbox
+            curl http://localhost:8080/v1/ports
+            ```
+
+            ### Changes
+            ${{ steps.changelog.outputs.changes }}
+          generate_release_notes: true

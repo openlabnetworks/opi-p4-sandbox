@@ -1,0 +1,73 @@
+# ============================================================
+# OPI & P4 Developer Sandbox — Docker Compose
+# ============================================================
+# Spins up the full sandbox environment:
+#   - OPI API Server (REST on :8080)
+#   - P4 BMv2 Software Switch (P4Runtime gRPC on :9559)
+#
+# Usage:
+#   docker compose up -d        # Start in background
+#   docker compose logs -f      # Follow logs
+#   docker compose down         # Tear down
+# ============================================================
+
+services:
+  # --- OPI API Server ---
+  opi-server:
+    image: ${OPI_IMAGE:-ghcr.io/opi-p4-sandbox/opi-server:latest}
+    build:
+      context: ./src/opi-server
+      dockerfile: ../../docker/opi-server/Dockerfile
+    container_name: opi-server
+    ports:
+      - "${OPI_PORT:-8080}:8080"
+    environment:
+      - OPI_PORT=8080
+      - OPI_LOG_LEVEL=${OPI_LOG_LEVEL:-info}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - opi-net
+    depends_on:
+      p4-bmv2:
+        condition: service_started
+    restart: unless-stopped
+
+  # --- P4 BMv2 Software Switch ---
+  p4-bmv2:
+    image: ${P4_IMAGE:-ghcr.io/opi-p4-sandbox/p4-bmv2:latest}
+    build:
+      context: ./docker/p4-bmv2
+      dockerfile: Dockerfile
+    container_name: p4-bmv2
+    ports:
+      - "${P4_GRPC_PORT:-9559}:9559"
+      - "${P4_THRIFT_PORT:-9090}:9090"
+    environment:
+      - P4_DEVICE_ID=0
+      - P4_GRPC_PORT=9559
+      - P4_THRIFT_PORT=9090
+      - P4_LOG_LEVEL=${P4_LOG_LEVEL:-info}
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./src/p4-programs:/p4/programs:ro
+      - p4-logs:/p4/logs
+    networks:
+      - opi-net
+    restart: unless-stopped
+
+networks:
+  opi-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  p4-logs:
+    driver: local

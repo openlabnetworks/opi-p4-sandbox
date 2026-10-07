@@ -1,0 +1,79 @@
+// ============================================================
+// .devcontainer/devcontainer.json
+// GitHub Codespaces & VS Code Dev Container Configuration
+// ============================================================
+// This configuration enables zero-install sandbox setup:
+//   1. Click "Open in Codespaces" badge in README
+//   2. Wait for container to build (~2 min)
+//   3. Sandbox auto-starts; ports auto-forward
+// ============================================================
+{
+  "name": "OPI & P4 Sandbox",
+
+  // Use a feature-rich base image with Docker-in-Docker support
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+
+  // Dev container features
+  "features": {
+    // Docker-in-Docker so we can run docker compose inside the container
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    },
+    // Go toolchain for OPI server development
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.22"
+    },
+    // Common utilities
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "configureZshAsDefaultShell": true
+    }
+  },
+
+  // Auto-start the sandbox when the container is created
+  "postCreateCommand": "make install-tools",
+  "postStartCommand": "make start-sandbox 2>&1 | tee /tmp/sandbox-startup.log &",
+
+  // Wait for services before showing the terminal
+  "waitFor": "postStartCommand",
+
+  // Forward ports automatically
+  "forwardPorts": [8080, 9559, 9090],
+  "portsAttributes": {
+    "8080": {
+      "label": "OPI API Server (REST)",
+      "onAutoForward": "notify"
+    },
+    "9559": {
+      "label": "P4 BMv2 (P4Runtime gRPC)",
+      "onAutoForward": "silent"
+    },
+    "9090": {
+      "label": "P4 BMv2 (Thrift)",
+      "onAutoForward": "silent"
+    }
+  },
+
+  // VS Code extensions for the dev environment
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "ms-vscode.makefile-tools",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml",
+        "timonwong.shellcheck"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "editor.formatOnSave": true,
+        "go.toolsManagement.autoUpdate": true
+      }
+    }
+  },
+
+  // Run as non-root user
+  "remoteUser": "vscode"
+}

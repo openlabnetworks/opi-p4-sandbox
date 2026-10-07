@@ -1,0 +1,3 @@
+# P4 Programs for BMv2 Docker Image
+# These are copied into the container at build time
+*.p4
