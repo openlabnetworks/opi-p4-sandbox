@@ -1,0 +1,11 @@
+# Optional variable overrides for Packer AMI build
+# Copy this file to variables.pkrvars.hcl and customize:
+
+aws_region    = "us-east-1"
+instance_type = "t3.medium"
+ami_prefix    = "opi-p4-sandbox"
+ami_version   = "v1.0.0"
+
+# If building inside a custom VPC/Subnet:
+# vpc_id      = "vpc-0123456789abcdef0"
+# subnet_id   = "subnet-0123456789abcdef0"

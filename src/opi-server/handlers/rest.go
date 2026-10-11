@@ -16,6 +16,10 @@ import (
 
 // RegisterRESTRoutes registers all OPI-style REST API routes on the given mux.
 func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *PipelineService) {
+	// Web Testing Dashboard
+	mux.HandleFunc("/ui", ServeUI)
+	mux.HandleFunc("/ui/", ServeUI)
+
 	// API info
 	mux.HandleFunc("/", handleAPIInfo)
 	mux.HandleFunc("/healthz", handleHealthz)
@@ -80,6 +84,11 @@ func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *Pip
 func handleAPIInfo(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
+		return
+	}
+	// Content negotiation: serve Web UI if requested by browser
+	if strings.Contains(r.Header.Get("Accept"), "text/html") {
+		ServeUI(w, r)
 		return
 	}
 	writeJSON(w, http.StatusOK, APIInfoResponse{

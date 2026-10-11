@@ -92,6 +92,23 @@ curl http://localhost:8080/v1/ports | python3 -m json.tool
 
 ---
 
+## 🌐 Interactive Web Testing Dashboard
+
+Prefer a graphical interface? The sandbox includes a built-in, lightweight **Web Testing Dashboard** served directly by the OPI server.
+
+**Open in your browser:** [`http://localhost:8080/ui`](http://localhost:8080/ui) *(or `http://localhost:8080/`)*
+
+### Key Features
+
+- 🎨 **Minimalist Light & Brutalist Design**: High-contrast, Swiss editorial typography, architectural grid canvas, and cobalt hardware passport card.
+- 🔌 **Live Port Manager**: View active ports, create new virtual SmartNIC ports with 1-click random MAC generation, and delete ports in real-time.
+- 📦 **P4 Pipeline Orchestrator**: Inspect deployed pipelines and register new P4 programs (`basic_forwarding.p4`, `firewall_drop.p4`).
+- ⚡ **Interactive 5-Stage Dataplane Packet Simulator**: Send simulated packets through Parser ➔ Verify Checksum ➔ Ingress Match-Action ➔ Egress ➔ Deparser with animated visual traversal and instant PASS / DROP security verdicts.
+- 💻 **Interactive REST API Console**: Fire test requests (`GET /healthz`, `GET /v1/ports`, `POST /v1/ports`) and copy generated `curl` commands.
+- 🧪 **One-Click Browser Smoke Test**: Run the complete automated test suite with a single click.
+
+---
+
 ## 🧪 Try More
 
 ### Create a Virtual Port
@@ -165,6 +182,42 @@ The sandbox starts automatically when the workspace opens. Ports are forwarded t
 
 ---
 
+## ☁️ AWS AMI Deployment (Option 1: Pre-Baked AMI with Packer)
+
+For cloud deployment on AWS EC2, the repository includes a complete **HashiCorp Packer** automation template that creates a pre-baked Amazon Machine Image (AMI).
+
+### Why Pre-Baked AMI?
+- ⚡ **Zero-Download Boot Time**: Docker, BMv2, and OPI images are 100% pre-built and cached inside the AMI filesystem. Instances boot and become healthy in seconds without downloading layers from the internet.
+- 🔄 **Auto-Start on Boot**: Uses systemd (`/etc/systemd/system/opi-sandbox.service`) to start `docker compose up -d` immediately upon EC2 launch.
+- 🌐 **Instant Cloud Web Dashboard**: Access `http://<ec2-public-ip>:8080/ui` as soon as the instance launches.
+
+### How to Build the AMI
+
+```bash
+# 1. Initialize Packer AWS builder plugins
+make ami-init
+# or: packer init packer/opi-sandbox.pkr.hcl
+
+# 2. Validate template
+make ami-validate
+
+# 3. Build the AMI (requires AWS credentials configured)
+make ami-build
+# or: packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl
+```
+
+### Launching the Instance
+1. Open the **AWS EC2 Console** ➔ **AMIs** (select "Owned by me").
+2. Select `opi-p4-sandbox-v1.0.0` and click **Launch Instance**.
+3. Choose instance type `t3.medium` or `t3.large`.
+4. Ensure Security Group allows inbound ports:
+   - `8080` (OPI REST API & Web Dashboard)
+   - `9559` (P4Runtime gRPC)
+   - `9090` (BMv2 Thrift CLI)
+5. Click **Launch**. Within 60 seconds, visit `http://<ec2-public-ip>:8080/ui`!
+
+---
+
 ## 🔧 API Reference
 
 > [!NOTE]
@@ -174,8 +227,9 @@ The sandbox starts automatically when the workspace opens. Ports are forwarded t
 
 | Method | Endpoint | Description |
 |--------|---------|-------------|
+| `GET` | `/ui` | Interactive Web Testing Dashboard |
 | `GET` | `/healthz` | Server health check |
-| `GET` | `/` | API info and version |
+| `GET` | `/` | API info (returns Web UI for browsers, JSON for API/curl) |
 | `GET` | `/v1/ports` | List all ports |
 | `POST` | `/v1/ports` | Create a new port |
 | `GET` | `/v1/ports/{id}` | Get a specific port |

@@ -251,3 +251,55 @@ func TestMethodNotAllowedAndValidation(t *testing.T) {
 		t.Errorf("expected 400 on empty pipeline id, got %d", rec.Code)
 	}
 }
+
+func TestServeUI(t *testing.T) {
+	mux := setupTestServer()
+
+	for _, path := range []string{"/ui", "/ui/"} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 on %s, got %d", path, rec.Code)
+		}
+		ct := rec.Header().Get("Content-Type")
+		if ct != "text/html; charset=utf-8" {
+			t.Errorf("expected text/html content-type on %s, got %s", path, ct)
+		}
+		body := rec.Body.String()
+		if !bytes.Contains([]byte(body), []byte("OPI & P4 Developer Sandbox")) {
+			t.Errorf("expected body to contain sandbox title on %s", path)
+		}
+	}
+}
+
+func TestContentNegotiation(t *testing.T) {
+	mux := setupTestServer()
+
+	// Browser request with text/html in Accept header
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 on browser GET /, got %d", rec.Code)
+	}
+	if rec.Header().Get("Content-Type") != "text/html; charset=utf-8" {
+		t.Errorf("expected HTML for browser request, got %s", rec.Header().Get("Content-Type"))
+	}
+
+	// API/curl request with application/json or */*
+	reqAPI := httptest.NewRequest(http.MethodGet, "/", nil)
+	recAPI := httptest.NewRecorder()
+	mux.ServeHTTP(recAPI, reqAPI)
+
+	if recAPI.Code != http.StatusOK {
+		t.Fatalf("expected 200 on API GET /, got %d", recAPI.Code)
+	}
+	if recAPI.Header().Get("Content-Type") != "application/json" {
+		t.Errorf("expected application/json for API request, got %s", recAPI.Header().Get("Content-Type"))
+	}
+}
+

@@ -13,7 +13,7 @@
 
 .PHONY: help start-sandbox stop-sandbox restart-sandbox status logs \
         smoke-test build-images push-images clean install-tools \
-        compile-p4
+        compile-p4 ui ami-init ami-validate ami-build
 
 # --- Configuration ---
 COMPOSE       := docker compose
@@ -43,12 +43,14 @@ start-sandbox: _check-docker
 	@echo ""
 	@echo "$(GREEN)$(BOLD)✅ Sandbox is running!$(RESET)"
 	@echo ""
+	@echo "  Web Dashboard  : $(CYAN)$(OPI_URL)/ui$(RESET)"
 	@echo "  OPI API Server : $(CYAN)$(OPI_URL)$(RESET)"
 	@echo "  P4 BMv2 gRPC   : $(CYAN)localhost:$(P4_GRPC_PORT)$(RESET)"
 	@echo "  P4 BMv2 Thrift : $(CYAN)localhost:$(P4_THRIFT_PORT)$(RESET)"
 	@echo ""
 	@echo "$(YELLOW)Quick test:$(RESET)"
-	@echo "  curl $(OPI_URL)/v1/ports"
+	@echo "  Open Web Dashboard: $(CYAN)$(OPI_URL)/ui$(RESET)"
+	@echo "  Or via curl:        curl $(OPI_URL)/v1/ports"
 	@echo ""
 
 ## stop-sandbox: Tear down all sandbox containers and networks
@@ -135,6 +137,31 @@ endif
 	docker run --rm -v $(PWD)/$(P4_PROGRAMS):/p4 p4lang/p4c:latest \
 		p4c-bm2-ss --p4v 16 -o /p4/$(basename $(P4)).json /p4/$(P4)
 	@echo "$(GREEN)✅ Compiled: $(P4_PROGRAMS)/$(basename $(P4)).json$(RESET)"
+
+## ui: Open or display the Web Testing Dashboard URL
+ui:
+	@echo "$(GREEN)$(BOLD)🌐 OPI & P4 Web Testing Dashboard:$(RESET) $(CYAN)$(OPI_URL)/ui$(RESET)"
+	@which xdg-open >/dev/null 2>&1 && xdg-open $(OPI_URL)/ui || true
+
+# ============================================================
+# AWS AMI Targets (Packer)
+# ============================================================
+
+## ami-init: Initialize HashiCorp Packer AWS plugins
+ami-init:
+	@echo "$(BOLD)🔧 Initializing Packer plugins...$(RESET)"
+	packer init packer/opi-sandbox.pkr.hcl
+
+## ami-validate: Validate Packer AMI template syntax
+ami-validate:
+	@echo "$(BOLD)🔍 Validating Packer AMI template...$(RESET)"
+	packer validate packer/opi-sandbox.pkr.hcl
+	@echo "$(GREEN)✅ Packer template is valid.$(RESET)"
+
+## ami-build: Build pre-baked AWS AMI (zero download boot time)
+ami-build: ami-init
+	@echo "$(GREEN)$(BOLD)☁️ Building Pre-Baked AWS AMI with Packer...$(RESET)"
+	packer build packer/opi-sandbox.pkr.hcl
 
 # ============================================================
 # Utility Targets
