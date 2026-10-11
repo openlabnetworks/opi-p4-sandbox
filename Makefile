@@ -133,8 +133,8 @@ ifndef P4
 endif
 	@echo "$(BOLD)📝 Compiling P4 program: $(P4)$(RESET)"
 	docker run --rm -v $(PWD)/$(P4_PROGRAMS):/p4 p4lang/p4c:latest \
-		p4c-bm2-ss --p4v 16 /p4/$(P4) -o /p4/$(basename $(P4) .p4).json
-	@echo "$(GREEN)✅ Compiled: $(P4_PROGRAMS)/$(basename $(P4) .p4).json$(RESET)"
+		p4c-bm2-ss --p4v 16 -o /p4/$(basename $(P4)).json /p4/$(P4)
+	@echo "$(GREEN)✅ Compiled: $(P4_PROGRAMS)/$(basename $(P4)).json$(RESET)"
 
 # ============================================================
 # Utility Targets

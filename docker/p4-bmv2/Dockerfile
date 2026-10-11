@@ -10,21 +10,25 @@
 FROM p4lang/behavioral-model:latest AS bmv2-base
 
 # --- Runtime Stage ---
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime dependencies
+# Install runtime dependencies matching p4lang/behavioral-model:latest (Ubuntu 24.04 Noble)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libboost-system1.74.0 \
-    libboost-thread1.74.0 \
-    libboost-filesystem1.74.0 \
-    libboost-program-options1.74.0 \
+    libboost-system1.83.0 \
+    libboost-thread1.83.0 \
+    libboost-filesystem1.83.0 \
+    libboost-program-options1.83.0 \
     libgmp10 \
-    libpcap0.8 \
+    libpcap0.8t64 \
     libnanomsg5 \
     libjsoncpp25 \
+    libavl1t64 \
+    libev4t64 \
+    libpcre3 \
+    libprotobuf-c1 \
     python3 \
     python3-pip \
     iproute2 \
@@ -61,4 +65,4 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
 WORKDIR /p4
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["--device-id", "0", "--log-level", "info"]
+CMD []

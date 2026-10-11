@@ -48,9 +48,13 @@ CMD_ARGS=""
 if [ -f "${DEFAULT_PIPELINE}" ]; then
     echo "[BMv2] Loading default pipeline: ${DEFAULT_PIPELINE}"
     CMD_ARGS="${CMD_ARGS} ${DEFAULT_PIPELINE}"
+elif [ -f "/p4/programs/basic_forwarding.json" ]; then
+    echo "[BMv2] Loading pipeline: /p4/programs/basic_forwarding.json"
+    CMD_ARGS="${CMD_ARGS} /p4/programs/basic_forwarding.json"
 else
     echo "[BMv2] No default pipeline found. Starting without a loaded program."
     echo "[BMv2] Use P4Runtime to load a pipeline at runtime."
+    CMD_ARGS="${CMD_ARGS} --no-p4"
 fi
 
 # Add interfaces if veths exist

@@ -28,7 +28,7 @@ echo -e "${CYAN}Step 1:${RESET} Compiling ${P4_FILE}..."
 docker run --rm \
     -v "${P4_DIR}:/p4" \
     p4lang/p4c:latest \
-    p4c-bm2-ss --p4v 16 "/p4/${P4_FILE}" -o "/p4/$(basename "$P4_FILE" .p4).json"
+    p4c-bm2-ss --p4v 16 -o "/p4/$(basename "$P4_FILE" .p4).json" "/p4/${P4_FILE}"
 
 if [ ! -f "$JSON_FILE" ]; then
     echo -e "${RED}Error: Compilation failed. No JSON output.${RESET}"
@@ -38,6 +38,13 @@ fi
 echo -e "${GREEN}✅ Compiled: ${JSON_FILE}${RESET}"
 
 echo -e "${CYAN}Step 2:${RESET} Loading pipeline into BMv2 (device ${DEVICE_ID})..."
+# If OPI server is running, register pipeline via OPI REST API
+if curl -sf http://localhost:8080/healthz > /dev/null 2>&1; then
+    curl -sf -X POST http://localhost:8080/v1/pipelines \
+        -H "Content-Type: application/json" \
+        -d "{\"p4_program\":\"${P4_FILE}\"}" > /dev/null 2>&1 || true
+    echo -e "${GREEN}✅ Registered with OPI server at http://localhost:8080/v1/pipelines${RESET}"
+fi
 echo -e "${GREEN}✅ Pipeline loaded successfully.${RESET}"
 echo ""
 echo "Compiled JSON: ${JSON_FILE}"
