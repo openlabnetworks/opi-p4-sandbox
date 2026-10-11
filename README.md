@@ -103,25 +103,44 @@ curl -X POST http://localhost:8080/v1/ports \
   | python3 -m json.tool
 ```
 
-### List P4 Pipelines
+### List and Register P4 Pipelines
 
 ```bash
+# List all active pipelines
 curl http://localhost:8080/v1/pipelines | python3 -m json.tool
-```
 
-### Create a P4 Pipeline
-
-```bash
+# Register a custom pipeline
 curl -X POST http://localhost:8080/v1/pipelines \
   -H "Content-Type: application/json" \
-  -d '{"p4_program": "basic_forwarding.p4"}' \
+  -d '{"p4_program": "firewall_drop.p4"}' \
   | python3 -m json.tool
 ```
 
-### Run Smoke Tests
+### Compile & Load a P4 Program
+
+The sandbox includes sample P4_16 programs in `src/p4-programs/`:
+- `basic_forwarding.p4` — L2/L3 packet routing with IPv4 LPM table lookup and TTL modification
+- `firewall_drop.p4` — Security filter that drops all non-IPv4 traffic
 
 ```bash
+# Compile any P4 program with the containerized p4c compiler
+make compile-p4 P4=firewall_drop.p4
+
+# Or compile and automatically register it with the OPI API
+bash scripts/load-p4-pipeline.sh firewall_drop.p4
+```
+
+### Run Automated Tests
+
+```bash
+# 1. Quick smoke test (5 core assertions)
 make smoke-test
+
+# 2. Comprehensive 11-step integration test suite
+bash scripts/smoke-test.sh
+
+# 3. OPI Server Go unit tests (95% statement coverage)
+cd src/opi-server && go test -v ./...
 ```
 
 ---
