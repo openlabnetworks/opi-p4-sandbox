@@ -167,21 +167,28 @@ jobs:
           platforms: linux/amd64
 
   # ──────────────────────────────────────────────────
-  # Job 4: Integration Test
+  # Job 4: End-to-End Integration Test
   # ──────────────────────────────────────────────────
   integration-test:
-    name: Integration Test
+    name: End-to-End Integration Test
     runs-on: ubuntu-latest
     needs: [build-opi-server, build-p4-bmv2]
-    if: github.event_name != 'pull_request'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start sandbox
+      - name: Log in to GHCR (pull built images)
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start full sandbox
         run: |
-          docker compose up -d opi-server
-          echo "Waiting for OPI server to be healthy..."
+          docker compose up -d
+          echo "⏳ Waiting for OPI server to be healthy..."
           for i in $(seq 1 30); do
             if curl -sf http://localhost:8080/healthz > /dev/null 2>&1; then
               echo "✅ OPI server is healthy!"
@@ -191,33 +198,44 @@ jobs:
             sleep 2
           done
 
-      - name: Run smoke tests
+      - name: Verify Web Dashboard serves HTML
         run: |
-          echo "=== Smoke Test: Health Check ==="
-          curl -sf http://localhost:8080/healthz | python3 -m json.tool
+          echo "=== Test: Web Dashboard /ui ==="
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/ui)
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ FAIL — /ui returned HTTP $STATUS"
+            exit 1
+          fi
+          curl -s http://localhost:8080/ui | grep -q "OPI" && \
+            echo "✅ Web Dashboard serves HTML correctly" || \
+            (echo "❌ FAIL — /ui did not return expected HTML" && exit 1)
 
           echo ""
-          echo "=== Smoke Test: List Ports ==="
-          curl -sf http://localhost:8080/v1/ports | python3 -m json.tool
+          echo "=== Test: Content Negotiation on / ==="
+          # Browser request → HTML
+          CT_HTML=$(curl -s -H "Accept: text/html" -o /dev/null -w '%{content_type}' http://localhost:8080/)
+          echo "Browser Accept:text/html → Content-Type: $CT_HTML"
+          echo "$CT_HTML" | grep -q "text/html" && echo "✅ PASS" || (echo "❌ FAIL" && exit 1)
 
-          echo ""
-          echo "=== Smoke Test: Create Port ==="
-          curl -sf -X POST http://localhost:8080/v1/ports \
-            -H "Content-Type: application/json" \
-            -d '{"mac_address":"aa:bb:cc:dd:ee:ff","mtu":9000}' | python3 -m json.tool
+          # API/curl request → JSON
+          CT_JSON=$(curl -s -o /dev/null -w '%{content_type}' http://localhost:8080/)
+          echo "curl (no Accept header) → Content-Type: $CT_JSON"
+          echo "$CT_JSON" | grep -q "application/json" && echo "✅ PASS" || (echo "❌ FAIL" && exit 1)
 
-          echo ""
-          echo "=== Smoke Test: List Pipelines ==="
-          curl -sf http://localhost:8080/v1/pipelines | python3 -m json.tool
+      - name: Run full smoke test suite (11 tests)
+        run: bash scripts/smoke-test.sh
 
-          echo ""
-          echo "✅ All integration tests passed!"
+      - name: Run Makefile smoke test
+        run: make smoke-test
 
       - name: Collect logs on failure
         if: failure()
         run: |
+          echo "=== Container Status ==="
+          docker compose ps -a
+          echo ""
           echo "=== Container Logs ==="
-          docker compose logs
+          docker compose logs --tail=100
 
       - name: Tear down
         if: always()
@@ -267,9 +285,47 @@ jobs:
             git clone https://github.com/${{ github.repository }}.git
             cd opi-p4-sandbox
             make start-sandbox
-            curl http://localhost:8080/v1/ports
+            # Open http://localhost:8080/ui in your browser
             ```
 
             ### Changes
             ${{ steps.changelog.outputs.changes }}
           generate_release_notes: true
+
+  # ──────────────────────────────────────────────────
+  # Job 6: Build AWS AMI with Packer (tags only)
+  # ──────────────────────────────────────────────────
+  build-ami:
+    name: Build AWS AMI (Packer)
+    runs-on: ubuntu-latest
+    needs: integration-test
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: latest
+
+      - name: Packer Init
+        run: packer init packer/opi-sandbox.pkr.hcl
+
+      - name: Packer Validate
+        run: packer validate packer/opi-sandbox.pkr.hcl
+
+      - name: Packer Build
+        run: |
+          packer build \
+            -var="aws_region=${{ vars.AWS_REGION || 'us-east-1' }}" \
+            -var="ami_version=${{ github.ref_name }}" \
+            packer/opi-sandbox.pkr.hcl
+
