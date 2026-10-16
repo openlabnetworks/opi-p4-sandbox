@@ -122,6 +122,11 @@ build {
     destination = "/tmp/opi-sandbox.service"
   }
 
+  # The file provisioner requires a pre-existing destination directory.
+  provisioner "shell" {
+    inline = ["mkdir -p /tmp/opi-p4-sandbox"]
+  }
+
   # Bake the exact source tree checked out by the caller or CI workflow.
   provisioner "file" {
     source      = "${path.root}/../"
