@@ -5,14 +5,57 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
+	"mime"
+	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+const maxRequestBodyBytes = 1 << 20
+
+// Validation patterns for user-supplied input.
+var (
+	// macRegex matches standard 6-octet colon-separated MAC addresses.
+	macRegex = regexp.MustCompile(`^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$`)
+	// p4ProgramRegex allows alphanumeric, underscores, hyphens, and dots; must end in .p4
+	p4ProgramRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.\-]{0,62}\.p4$`)
+)
+
+// decodeJSONBody validates and decodes a request body. An empty body is valid
+// and leaves dst at its zero value so callers can apply their defaults.
+func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) bool {
+	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil || mediaType != "application/json" {
+		writeJSON(w, http.StatusUnsupportedMediaType, map[string]string{
+			"error": "Content-Type must be application/json",
+		})
+		return false
+	}
+
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxRequestBodyBytes))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(dst); err != nil && !errors.Is(err, io.EOF) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "invalid JSON body: " + err.Error(),
+		})
+		return false
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "invalid JSON body: must contain a single JSON object",
+		})
+		return false
+	}
+	return true
+}
 
 // RegisterRESTRoutes registers all OPI-style REST API routes on the given mux.
 func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *PipelineService) {
@@ -98,7 +141,7 @@ func handleAPIInfo(w http.ResponseWriter, r *http.Request) {
 			"opi.v1.NetworkService",
 			"opi.v1.PipelineService",
 		},
-		DocsURL: "https://github.com/opi-p4-sandbox/opi-p4-sandbox",
+		DocsURL: "https://github.com/openlabnetworks/opi-p4-sandbox",
 	})
 }
 
@@ -159,19 +202,43 @@ func handleGetPort(w http.ResponseWriter, r *http.Request, svc *NetworkService, 
 
 func handleCreatePort(w http.ResponseWriter, r *http.Request, svc *NetworkService) {
 	var req CreatePortRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		// Allow empty body — use defaults
-		req = CreatePortRequest{}
+	if !decodeJSONBody(w, r, &req) {
+		return
+	}
+
+	// --- Input validation ---
+	parsedMAC, err := net.ParseMAC(req.MacAddress)
+	if req.MacAddress != "" && (err != nil || len(parsedMAC) != 6 || !macRegex.MatchString(req.MacAddress)) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "invalid mac_address format; expected XX:XX:XX:XX:XX:XX",
+		})
+		return
+	}
+	if req.Mtu != 0 && (req.Mtu < 68 || req.Mtu > 9216) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "mtu must be between 68 and 9216",
+		})
+		return
 	}
 
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	id := fmt.Sprintf("port-%d", len(svc.ports))
+	// Use monotonic counter — never reuses IDs even after deletes
+	seq := svc.nextID.Add(1) - 1
+	id := fmt.Sprintf("port-%d", seq)
 	name := fmt.Sprintf("ports/%s", id)
 
+	// Defensive: reject if ID already exists (should never happen with a counter)
+	if _, exists := svc.ports[id]; exists {
+		writeJSON(w, http.StatusConflict, map[string]string{
+			"error": fmt.Sprintf("port %q already exists", id),
+		})
+		return
+	}
+
 	if req.MacAddress == "" {
-		req.MacAddress = fmt.Sprintf("00:1a:2b:3c:%02x:%02x", len(svc.ports)/256, len(svc.ports)%256)
+		req.MacAddress = fmt.Sprintf("00:1a:2b:%02x:%02x:%02x", (seq>>16)&0xff, (seq>>8)&0xff, seq&0xff)
 	}
 	if req.Mtu == 0 {
 		req.Mtu = 1500
@@ -259,15 +326,33 @@ func handleGetPipeline(w http.ResponseWriter, r *http.Request, svc *PipelineServ
 
 func handleCreatePipeline(w http.ResponseWriter, r *http.Request, svc *PipelineService) {
 	var req CreatePipelineRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		req = CreatePipelineRequest{}
+	if !decodeJSONBody(w, r, &req) {
+		return
+	}
+
+	// --- Input validation ---
+	if req.P4Program != "" && !p4ProgramRegex.MatchString(req.P4Program) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "invalid p4_program name; must be alphanumeric with underscores/hyphens, ending in .p4",
+		})
+		return
 	}
 
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	id := fmt.Sprintf("pipeline-%d", len(svc.pipelines))
+	// Use monotonic counter — never reuses IDs even after deletes
+	seq := svc.nextID.Add(1) - 1
+	id := fmt.Sprintf("pipeline-%d", seq)
 	name := fmt.Sprintf("pipelines/%s", id)
+
+	// Defensive: reject if ID already exists (should never happen with a counter)
+	if _, exists := svc.pipelines[id]; exists {
+		writeJSON(w, http.StatusConflict, map[string]string{
+			"error": fmt.Sprintf("pipeline %q already exists", id),
+		})
+		return
+	}
 
 	if req.P4Program == "" {
 		req.P4Program = "basic_forwarding.p4"
@@ -277,7 +362,7 @@ func handleCreatePipeline(w http.ResponseWriter, r *http.Request, svc *PipelineS
 		Name:       name,
 		Id:         id,
 		P4Program:  req.P4Program,
-		Status:     "LOADED",
+		Status:     "REGISTERED",
 		CreateTime: time.Now(),
 	}
 

@@ -1,10 +1,6 @@
-// Package handlers - gRPC type definitions and service descriptors.
-// These types mirror the OPI API protobuf messages in a lightweight way
-// so the sandbox compiles without requiring the full OPI protobuf toolchain.
-//
-// For the sandbox, we use a simplified approach: a standard net/http JSON API
-// server that emulates OPI-style resource management, combined with gRPC
-// server reflection so tools like grpcurl can discover the service.
+// Package handlers contains the types used by the REST/JSON OPI emulator.
+// They mirror a small subset of OPI resource shapes without requiring the full
+// OPI protobuf toolchain. This package does not expose a gRPC server.
 package handlers
 
 import (

@@ -17,14 +17,14 @@ programmable dataplanes — without requiring physical SmartNIC or DPU hardware.
 │  │   ┌──────────────────┐   ┌──────────────────────┐  │  │
 │  │   │  OPI API Server  │   │  P4 BMv2 Switch      │  │  │
 │  │   │                  │   │                      │  │  │
-│  │   │  REST :8080      │◄─►│  P4Runtime :9559     │  │  │
+│  │   │  REST :8080      │   │  P4Runtime :9559     │  │  │
 │  │   │                  │   │  Thrift    :9090     │  │  │
 │  │   │  Services:       │   │                      │  │  │
 │  │   │  - NetworkSvc    │   │  Features:           │  │  │
 │  │   │  - PipelineSvc   │   │  - simple_switch_grpc│  │  │
-│  │   │                  │   │  - P4 compiler (p4c) │  │  │
+│  │   │                  │   │  - Precompiled P4 program │  │  │
 │  │   │  Go binary       │   │  - Virtual interfaces│  │  │
-│  │   │  ~30MB image     │   │  - Pipeline loading  │  │  │
+│  │   │  ~30MB image     │   │  - External control  │  │  │
 │  │   └──────────────────┘   └──────────────────────┘  │  │
 │  │                                                    │  │
 │  └────────────────────────────────────────────────────┘  │
@@ -43,6 +43,8 @@ APIs for infrastructure offloading. It provides:
 
 The server uses in-memory storage, so data resets when the container restarts.
 This is intentional for a sandbox — it ensures a clean state for each experiment.
+Pipeline records are metadata only: the server does not connect to BMv2 or install
+programs through P4Runtime.
 
 ### API Design
 
@@ -73,11 +75,11 @@ veth3 ←→ veth3_peer     (Port 3)
 
 ## Data Flow
 
-1. Developer sends API request to OPI server (REST on :8080)
-2. OPI server manages port/pipeline resources in memory
-3. P4 programs are compiled and loaded into BMv2 via P4Runtime
-4. BMv2 processes packets according to the loaded P4 pipeline
-5. Forwarding rules are programmed via P4Runtime table entries
+1. Developer sends an API request to the OPI server (REST on :8080)
+2. The OPI server manages port and pipeline metadata in memory
+3. Developer compiles a P4 program to BMv2 JSON
+4. Developer uses a P4Runtime client directly against BMv2 on :9559 to install the program
+5. BMv2 processes packets and receives table entries through that direct P4Runtime connection
 
 ## Technology Stack
 

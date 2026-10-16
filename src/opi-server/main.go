@@ -16,7 +16,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/opi-p4-sandbox/opi-server/handlers"
+	"github.com/openlabnetworks/opi-p4-sandbox/opi-server/handlers"
 )
 
 var (

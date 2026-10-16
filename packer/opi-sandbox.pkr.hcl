@@ -122,6 +122,12 @@ build {
     destination = "/tmp/opi-sandbox.service"
   }
 
+  # Bake the exact source tree checked out by the caller or CI workflow.
+  provisioner "file" {
+    source      = "${path.root}/../"
+    destination = "/tmp/opi-p4-sandbox"
+  }
+
   # Execute provisioning script as sudo
   provisioner "shell" {
     script          = "${path.root}/setup.sh"

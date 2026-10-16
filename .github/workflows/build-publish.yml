@@ -58,16 +58,15 @@ jobs:
           go test -v -race -coverprofile=coverage.out ./...
           echo "✅ Go tests passed"
 
-      - name: Validate P4 syntax
+      - name: Compile P4 programs
         run: |
-          echo "Checking P4 file syntax..."
+          echo "Compiling P4 programs..."
           for f in src/p4-programs/*.p4; do
-            echo "  Validating: $f"
-            # Basic syntax check - ensure file is valid P4_16
-            head -1 "$f" | grep -q "P4_16\|p4_16\|core.p4" || \
-              (echo "❌ Invalid P4 file: $f" && exit 1)
+            echo "  Compiling: $f"
+            docker run --rm -v "$PWD/src/p4-programs:/p4:ro" p4lang/p4c:latest \
+              p4c-bm2-ss --p4v 16 -o /tmp/"$(basename "$f" .p4)".json "/p4/$(basename "$f")"
           done
-          echo "✅ P4 syntax checks passed"
+          echo "✅ P4 programs compiled successfully"
 
       - name: Validate Docker Compose
         run: |
@@ -328,4 +327,3 @@ jobs:
             -var="aws_region=${{ vars.AWS_REGION || 'us-east-1' }}" \
             -var="ami_version=${{ github.ref_name }}" \
             packer/opi-sandbox.pkr.hcl
-

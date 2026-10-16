@@ -14,7 +14,7 @@
 This repository packages an **OPI API emulator** and a **P4 BMv2 software switch** into a pre-built, containerized sandbox that any developer can spin up in under 3 minutes. It lets you:
 
 - 🔌 **Test OPI APIs** — Create and manage virtual network ports and P4 pipelines
-- 📝 **Write P4 programs** — Compile and load custom P4 dataplane programs
+- 📝 **Write P4 programs** — Compile custom P4 dataplane programs for BMv2
 - 🧪 **Validate architectures** — Test your datapath offloading design against the OPI standard
 - ☁️ **Run anywhere** — Locally with Docker, or in the cloud with GitHub Codespaces
 
@@ -25,15 +25,15 @@ This repository packages an **OPI API emulator** and a **P4 BMv2 software switch
 │                                                     │
 │   ┌────────────────┐       ┌────────────────────┐   │
 │   │  OPI Server    │       │  P4 BMv2 Switch    │   │
-│   │  REST :8080    │◄─────►│  P4Runtime :9559   │   │
+│   │  REST :8080    │       │  P4Runtime :9559   │   │
 │   │                │       │  Thrift    :9090   │   │
 │   │  • NetworkSvc  │       │  • simple_switch   │   │
-│   │  • PipelineSvc │       │  • P4 compiler     │   │
+│   │  • PipelineSvc │       │  • External control│   │
 │   └────────────────┘       └────────────────────┘   │
 │                                                     │
 └─────────────────────────────────────────────────────┘
          ▲                           ▲
-         │ curl / grpcurl            │ P4Runtime
+         │ curl                 P4Runtime client
          │                           │
     ┌────┴───────────────────────────┴────┐
     │          Developer Machine          │
@@ -102,7 +102,7 @@ Prefer a graphical interface? The sandbox includes a built-in, lightweight **Web
 
 - 🎨 **Minimalist Light & Brutalist Design**: High-contrast, Swiss editorial typography, architectural grid canvas, and cobalt hardware passport card.
 - 🔌 **Live Port Manager**: View active ports, create new virtual SmartNIC ports with 1-click random MAC generation, and delete ports in real-time.
-- 📦 **P4 Pipeline Orchestrator**: Inspect deployed pipelines and register new P4 programs (`basic_forwarding.p4`, `firewall_drop.p4`).
+- 📦 **P4 Pipeline Registry**: Inspect registered pipeline metadata and register P4 programs (`basic_forwarding.p4`, `firewall_drop.p4`).
 - ⚡ **Interactive 5-Stage Dataplane Packet Simulator**: Send simulated packets through Parser ➔ Verify Checksum ➔ Ingress Match-Action ➔ Egress ➔ Deparser with animated visual traversal and instant PASS / DROP security verdicts.
 - 💻 **Interactive REST API Console**: Fire test requests (`GET /healthz`, `GET /v1/ports`, `POST /v1/ports`) and copy generated `curl` commands.
 - 🧪 **One-Click Browser Smoke Test**: Run the complete automated test suite with a single click.
@@ -133,7 +133,7 @@ curl -X POST http://localhost:8080/v1/pipelines \
   | python3 -m json.tool
 ```
 
-### Compile & Load a P4 Program
+### Compile and Register a P4 Program
 
 The sandbox includes sample P4_16 programs in `src/p4-programs/`:
 - `basic_forwarding.p4` — L2/L3 packet routing with IPv4 LPM table lookup and TTL modification
@@ -143,9 +143,12 @@ The sandbox includes sample P4_16 programs in `src/p4-programs/`:
 # Compile any P4 program with the containerized p4c compiler
 make compile-p4 P4=firewall_drop.p4
 
-# Or compile and automatically register it with the OPI API
+# Or compile and register its metadata with the OPI API
 bash scripts/load-p4-pipeline.sh firewall_drop.p4
 ```
+
+> [!IMPORTANT]
+> The REST pipeline endpoints are an in-memory metadata emulator and do not load a pipeline into BMv2. Use a P4Runtime client directly against `localhost:9559` to install a compiled program on the switch.
 
 ### Run Automated Tests
 
@@ -167,7 +170,7 @@ cd src/opi-server && go test -v ./...
 | # | Experiment | Difficulty | Description |
 |---|-----------|-----------|-------------|
 | 01 | [Hello OPI](examples/01-hello-opi/) | Beginner | Your first OPI API interaction |
-| 02 | [Custom P4](examples/02-custom-p4/) | Intermediate | Write, compile, and load a P4 program |
+| 02 | [Custom P4](examples/02-custom-p4/) | Intermediate | Write, compile, and register a P4 program |
 | 03 | [Pipeline Management](examples/03-opi-pipeline-mgmt/) | Intermediate | Full pipeline CRUD lifecycle |
 
 ---
@@ -221,7 +224,7 @@ make ami-build
 ## 🔧 API Reference
 
 > [!NOTE]
-> **REST vs gRPC:** The official OPI APIs are gRPC and protobuf-based. To make this sandbox as accessible as possible without requiring users to install `grpcurl` or compile protobufs, the sandbox server provides a simplified REST/JSON emulator that mirrors the structure and naming conventions of the real OPI APIs.
+> **REST vs gRPC:** The official OPI APIs are gRPC and protobuf-based. To make this sandbox as accessible as possible without requiring users to install `grpcurl` or compile protobufs, the sandbox server provides a simplified REST/JSON emulator that mirrors the structure and naming conventions of the real OPI APIs. It does not proxy REST pipeline requests to BMv2; program installation is performed separately through P4Runtime.
 
 ### Endpoints
 

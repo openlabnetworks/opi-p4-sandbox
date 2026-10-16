@@ -6,6 +6,7 @@ package handlers
 import (
 	"log"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -28,7 +29,7 @@ type Pipeline struct {
 	Name       string
 	Id         string
 	P4Program  string
-	Status     string // LOADED, RUNNING, STOPPED, ERROR
+	Status     string // REGISTERED; this emulator does not report BMv2 state
 	CreateTime time.Time
 }
 
@@ -36,8 +37,9 @@ type Pipeline struct {
 
 // NetworkService implements OPI network port management APIs.
 type NetworkService struct {
-	mu    sync.RWMutex
-	ports map[string]*Port
+	mu     sync.RWMutex
+	ports  map[string]*Port
+	nextID atomic.Uint64 // monotonic counter for unique port IDs
 }
 
 // NewNetworkService creates a new NetworkService with a default port.
@@ -58,6 +60,9 @@ func NewNetworkService() *NetworkService {
 		CreateTime: time.Now(),
 	}
 
+	// Start counter past the pre-populated entry so IDs never collide
+	svc.nextID.Store(1)
+
 	log.Printf("[NetworkService] Initialized with 1 default port")
 	return svc
 }
@@ -68,6 +73,7 @@ func NewNetworkService() *NetworkService {
 type PipelineService struct {
 	mu        sync.RWMutex
 	pipelines map[string]*Pipeline
+	nextID    atomic.Uint64 // monotonic counter for unique pipeline IDs
 }
 
 // NewPipelineService creates a new PipelineService.
@@ -81,7 +87,7 @@ func NewPipelineService() *PipelineService {
 		Name:       "pipelines/pipeline-default",
 		Id:         "pipeline-default",
 		P4Program:  "basic_forwarding.p4",
-		Status:     "RUNNING",
+		Status:     "REGISTERED",
 		CreateTime: time.Now(),
 	}
 

@@ -8,7 +8,7 @@
 # It installs:
 #   - Docker Engine & Docker Compose Plugin (Official Docker Repositories)
 #   - Build tools (git, make, curl, jq, net-tools)
-#   - Clones/copies the opi-p4-sandbox repository to /opt/opi-p4-sandbox
+#   - Copies the Packer-uploaded opi-p4-sandbox source to /opt/opi-p4-sandbox
 #   - Pre-builds and caches all Docker images locally inside the AMI
 #   - Configures and enables /etc/systemd/system/opi-sandbox.service
 # ==============================================================================
@@ -68,14 +68,12 @@ echo "📂 [3/6] Setting up /opt/opi-p4-sandbox repository..."
 echo "=========================================================="
 mkdir -p /opt/opi-p4-sandbox
 
-# If source code was uploaded by Packer to /tmp/opi-p4-sandbox, move it
-if [ -d "/tmp/opi-p4-sandbox" ]; then
-    cp -r /tmp/opi-p4-sandbox/* /opt/opi-p4-sandbox/
-    rm -rf /tmp/opi-p4-sandbox
-else
-    # Fallback to cloning from GitHub repository
-    git clone https://github.com/opi-p4-sandbox/opi-p4-sandbox.git /opt/opi-p4-sandbox
+if [ ! -f "/tmp/opi-p4-sandbox/docker-compose.yml" ]; then
+    echo "Packer source upload is missing or incomplete."
+    exit 1
 fi
+cp -a /tmp/opi-p4-sandbox/. /opt/opi-p4-sandbox/
+rm -rf /tmp/opi-p4-sandbox
 
 # Set ownership
 chown -R ubuntu:ubuntu /opt/opi-p4-sandbox || true

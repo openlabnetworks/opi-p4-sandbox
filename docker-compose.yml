@@ -14,7 +14,7 @@
 services:
   # --- OPI API Server ---
   opi-server:
-    image: ${OPI_IMAGE:-ghcr.io/opi-p4-sandbox/opi-server:latest}
+    image: ${OPI_IMAGE:-ghcr.io/openlabnetworks/opi-server:latest}
     build:
       context: ./src/opi-server
       dockerfile: ../../docker/opi-server/Dockerfile
@@ -39,7 +39,7 @@ services:
 
   # --- P4 BMv2 Software Switch ---
   p4-bmv2:
-    image: ${P4_IMAGE:-ghcr.io/opi-p4-sandbox/p4-bmv2:latest}
+    image: ${P4_IMAGE:-ghcr.io/openlabnetworks/p4-bmv2:latest}
     build:
       context: ./docker/p4-bmv2
       dockerfile: Dockerfile

@@ -1,14 +1,16 @@
 #!/bin/bash
 # ============================================================
-# Compile and Load P4 Pipeline into BMv2
+# Compile a P4 Program and Register Its Metadata
 # ============================================================
-# Usage: ./load-p4-pipeline.sh <p4_file> [device_id]
-# Example: ./load-p4-pipeline.sh basic_forwarding.p4 0
+# Usage: ./load-p4-pipeline.sh <p4_file>
+# Example: ./load-p4-pipeline.sh basic_forwarding.p4
+#
+# This helper compiles a P4 source file and optionally registers its name with
+# the REST API. It does not install a forwarding pipeline on BMv2.
 # ============================================================
 set -euo pipefail
 
-P4_FILE="${1:?Usage: $0 <p4_file> [device_id]}"
-DEVICE_ID="${2:-0}"
+P4_FILE="${1:?Usage: $0 <p4_file>}"
 P4_DIR="$(cd "$(dirname "$0")/../src/p4-programs" && pwd)"
 P4_PATH="${P4_DIR}/${P4_FILE}"
 JSON_FILE="${P4_DIR}/$(basename "$P4_FILE" .p4).json"
@@ -17,6 +19,7 @@ JSON_FILE="${P4_DIR}/$(basename "$P4_FILE" .p4).json"
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 RED='\033[0;31m'
+YELLOW='\033[0;33m'
 RESET='\033[0m'
 
 if [ ! -f "$P4_PATH" ]; then
@@ -37,15 +40,16 @@ fi
 
 echo -e "${GREEN}✅ Compiled: ${JSON_FILE}${RESET}"
 
-echo -e "${CYAN}Step 2:${RESET} Loading pipeline into BMv2 (device ${DEVICE_ID})..."
-# If OPI server is running, register pipeline via OPI REST API
+echo -e "${CYAN}Step 2:${RESET} Registering pipeline metadata with the OPI API..."
+# The REST API is an in-memory emulator. Registration does not contact BMv2.
 if curl -sf http://localhost:8080/healthz > /dev/null 2>&1; then
-    curl -sf -X POST http://localhost:8080/v1/pipelines \
+    curl -fsS -X POST http://localhost:8080/v1/pipelines \
         -H "Content-Type: application/json" \
-        -d "{\"p4_program\":\"${P4_FILE}\"}" > /dev/null 2>&1 || true
-    echo -e "${GREEN}✅ Registered with OPI server at http://localhost:8080/v1/pipelines${RESET}"
+        -d "{\"p4_program\":\"${P4_FILE}\"}" > /dev/null
+    echo -e "${GREEN}✅ Registered metadata with OPI server at http://localhost:8080/v1/pipelines${RESET}"
+else
+    echo -e "${YELLOW}⚠️  OPI server is unavailable; pipeline metadata was not registered.${RESET}"
 fi
-echo -e "${GREEN}✅ Pipeline loaded successfully.${RESET}"
+echo -e "${YELLOW}NOTE: This script does not load the compiled pipeline into BMv2.${RESET}"
 echo ""
 echo "Compiled JSON: ${JSON_FILE}"
-echo "Device ID: ${DEVICE_ID}"

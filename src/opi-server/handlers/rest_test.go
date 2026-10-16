@@ -193,7 +193,7 @@ func TestPipelineLifecycle(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&createdPipe); err != nil {
 		t.Fatalf("failed to decode created pipeline: %v", err)
 	}
-	if createdPipe.P4Program != "firewall_drop.p4" || createdPipe.Status != "LOADED" {
+	if createdPipe.P4Program != "firewall_drop.p4" || createdPipe.Status != "REGISTERED" {
 		t.Errorf("unexpected pipeline fields: %+v", createdPipe)
 	}
 
@@ -303,3 +303,188 @@ func TestContentNegotiation(t *testing.T) {
 	}
 }
 
+func TestCreateValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		contentType string
+		body        string
+		wantStatus  int
+	}{
+		{"empty port body uses defaults", "/v1/ports", "application/json", "", http.StatusCreated},
+		{"empty pipeline body uses defaults", "/v1/pipelines", "application/json", "", http.StatusCreated},
+		{"port requires JSON media type", "/v1/ports", "text/plain", `{"mac_address":"aa:bb:cc:dd:ee:ff"}`, http.StatusUnsupportedMediaType},
+		{"pipeline requires JSON media type", "/v1/pipelines", "text/plain", `{"p4_program":"safe.p4"}`, http.StatusUnsupportedMediaType},
+		{"malformed port JSON", "/v1/ports", "application/json", "{garbage", http.StatusBadRequest},
+		{"malformed pipeline JSON", "/v1/pipelines", "application/json", "{garbage", http.StatusBadRequest},
+		{"invalid MAC", "/v1/ports", "application/json", `{"mac_address":"not-a-mac"}`, http.StatusBadRequest},
+		{"invalid MTU", "/v1/ports", "application/json", `{"mtu":-5}`, http.StatusBadRequest},
+		{"oversized MTU", "/v1/ports", "application/json", `{"mtu":9217}`, http.StatusBadRequest},
+		{"unsafe P4 program", "/v1/pipelines", "application/json", `{"p4_program":"<img src=x onerror=alert(1)>"}`, http.StatusBadRequest},
+		{"unknown port field", "/v1/ports", "application/json", `{"unexpected":true}`, http.StatusBadRequest},
+		{"multiple JSON values", "/v1/pipelines", "application/json", `{} {}`, http.StatusBadRequest},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mux := setupTestServer()
+			req := httptest.NewRequest(http.MethodPost, tt.path, bytes.NewBufferString(tt.body))
+			req.Header.Set("Content-Type", tt.contentType)
+			rec := httptest.NewRecorder()
+			mux.ServeHTTP(rec, req)
+			if rec.Code != tt.wantStatus {
+				t.Fatalf("expected status %d, got %d: %s", tt.wantStatus, rec.Code, rec.Body.String())
+			}
+		})
+	}
+}
+
+// TestCreateDeleteCreatePort is a regression test for GitHub issue #1:
+// creating a port after a delete must never reuse an ID or silently overwrite
+// an existing port. The monotonic counter must always advance.
+func TestCreateDeleteCreatePort(t *testing.T) {
+	mux := setupTestServer()
+
+	// Step 1: Create port (should be port-1 because port-0 is pre-populated)
+	req := httptest.NewRequest(http.MethodPost, "/v1/ports", bytes.NewBufferString(`{"mac_address":"aa:bb:cc:dd:ee:01","mtu":1500}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("step 1: expected 201, got %d", rec.Code)
+	}
+	var port1 PortInfo
+	json.NewDecoder(rec.Body).Decode(&port1)
+	if port1.Id != "port-1" {
+		t.Fatalf("step 1: expected id port-1, got %s", port1.Id)
+	}
+
+	// Step 2: Delete port-1
+	req = httptest.NewRequest(http.MethodDelete, "/v1/ports/port-1", nil)
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("step 2: expected 204, got %d", rec.Code)
+	}
+
+	// Step 3: Create another port — MUST get port-2, NOT port-1 again
+	req = httptest.NewRequest(http.MethodPost, "/v1/ports", bytes.NewBufferString(`{"mac_address":"aa:bb:cc:dd:ee:02","mtu":9000}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("step 3: expected 201, got %d", rec.Code)
+	}
+	var port2 PortInfo
+	json.NewDecoder(rec.Body).Decode(&port2)
+	if port2.Id != "port-2" {
+		t.Fatalf("step 3: expected id port-2, got %s (ID was reused!)", port2.Id)
+	}
+
+	// Step 4: Verify port-0 (pre-populated) was NOT overwritten
+	req = httptest.NewRequest(http.MethodGet, "/v1/ports/port-0", nil)
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("step 4: port-0 should still exist, got %d", rec.Code)
+	}
+	var port0 PortInfo
+	json.NewDecoder(rec.Body).Decode(&port0)
+	if port0.MacAddress != "00:1a:2b:3c:4d:5e" {
+		t.Fatalf("step 4: port-0 was silently overwritten! MAC = %s", port0.MacAddress)
+	}
+
+	// Step 5: Verify all ports have unique IDs (list them)
+	req = httptest.NewRequest(http.MethodGet, "/v1/ports", nil)
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	var listResp PortListResponse
+	json.NewDecoder(rec.Body).Decode(&listResp)
+	if len(listResp.Ports) != 2 {
+		t.Fatalf("step 5: expected 2 ports (port-0 + port-2), got %d", len(listResp.Ports))
+	}
+	ids := map[string]bool{}
+	for _, p := range listResp.Ports {
+		if ids[p.Id] {
+			t.Fatalf("step 5: duplicate port ID %s detected!", p.Id)
+		}
+		ids[p.Id] = true
+	}
+}
+
+// TestCreateDeleteCreatePipeline is a regression test for GitHub issue #1:
+// creating a pipeline after a delete must never reuse an ID or silently
+// overwrite an existing pipeline.
+func TestCreateDeleteCreatePipeline(t *testing.T) {
+	mux := setupTestServer()
+
+	// Step 1: Create pipeline (should be pipeline-0, default is "pipeline-default")
+	req := httptest.NewRequest(http.MethodPost, "/v1/pipelines", bytes.NewBufferString(`{"p4_program":"firewall.p4"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("step 1: expected 201, got %d", rec.Code)
+	}
+	var pipe1 PipelineInfo
+	json.NewDecoder(rec.Body).Decode(&pipe1)
+	if pipe1.Id != "pipeline-0" {
+		t.Fatalf("step 1: expected id pipeline-0, got %s", pipe1.Id)
+	}
+
+	// Step 2: Delete pipeline-0
+	req = httptest.NewRequest(http.MethodDelete, "/v1/pipelines/pipeline-0", nil)
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("step 2: expected 204, got %d", rec.Code)
+	}
+
+	// Step 3: Create another pipeline — MUST get pipeline-1, NOT pipeline-0 again
+	req = httptest.NewRequest(http.MethodPost, "/v1/pipelines", bytes.NewBufferString(`{"p4_program":"acl.p4"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("step 3: expected 201, got %d", rec.Code)
+	}
+	var pipe2 PipelineInfo
+	json.NewDecoder(rec.Body).Decode(&pipe2)
+	if pipe2.Id != "pipeline-1" {
+		t.Fatalf("step 3: expected id pipeline-1, got %s (ID was reused!)", pipe2.Id)
+	}
+
+	// Step 4: Verify pipeline-default was NOT overwritten
+	req = httptest.NewRequest(http.MethodGet, "/v1/pipelines/pipeline-default", nil)
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("step 4: pipeline-default should still exist, got %d", rec.Code)
+	}
+	var pipeDefault PipelineInfo
+	json.NewDecoder(rec.Body).Decode(&pipeDefault)
+	if pipeDefault.P4Program != "basic_forwarding.p4" {
+		t.Fatalf("step 4: pipeline-default was silently overwritten! P4 = %s", pipeDefault.P4Program)
+	}
+
+	// Step 5: Verify all pipelines have unique IDs
+	req = httptest.NewRequest(http.MethodGet, "/v1/pipelines", nil)
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	var listResp PipelineListResponse
+	json.NewDecoder(rec.Body).Decode(&listResp)
+	if len(listResp.Pipelines) != 2 {
+		t.Fatalf("step 5: expected 2 pipelines (pipeline-default + pipeline-1), got %d", len(listResp.Pipelines))
+	}
+	ids := map[string]bool{}
+	for _, p := range listResp.Pipelines {
+		if ids[p.Id] {
+			t.Fatalf("step 5: duplicate pipeline ID %s detected!", p.Id)
+		}
+		ids[p.Id] = true
+	}
+}

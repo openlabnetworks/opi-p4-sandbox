@@ -53,13 +53,16 @@ curl -X POST http://localhost:8080/v1/pipelines \
   }' | python3 -m json.tool
 ```
 
-## Step 5: Check Pipeline Status
+## Step 5: Check Pipeline Registration
 
 ```bash
 curl http://localhost:8080/v1/pipelines/pipeline-1 | python3 -m json.tool
 ```
 
-The pipeline status should show `LOADED`.
+The pipeline status should show `REGISTERED`. This confirms the REST emulator
+has stored the pipeline metadata; it does not install the program on BMv2.
+Use a P4Runtime client directly against `localhost:9559` to install the JSON
+program produced in Step 2.
 
 ## Step 6: Write Your Own P4 Program
 
@@ -126,7 +129,7 @@ curl -X POST http://localhost:8080/v1/pipelines \
 You've learned how to:
 - Read and understand a P4_16 program structure
 - Compile P4 programs for BMv2
-- Manage pipelines through the OPI API
+- Register pipeline metadata through the OPI API
 - Write your own P4 program from scratch
 
 **Next:** Try [Experiment 03 — OPI Pipeline Management](../03-opi-pipeline-mgmt/README.md)

@@ -1,4 +1,4 @@
-module github.com/opi-p4-sandbox/opi-server
+module github.com/openlabnetworks/opi-p4-sandbox/opi-server
 
 go 1.22.0
 

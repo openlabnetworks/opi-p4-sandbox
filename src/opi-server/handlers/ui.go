@@ -706,7 +706,7 @@ const dashboardHTML = `<!DOCTYPE html>
 
       <div class="hero-footer-meta">
         <div>01 &mdash; 05 // SYSTEM TEST</div>
-        <div>{ OPI API &rarr; BMV2 SWITCH }</div>
+        <div>{ REST METADATA // BMV2 CONTROL SEPARATE }</div>
       </div>
     </div>
 
@@ -788,10 +788,10 @@ const dashboardHTML = `<!DOCTYPE html>
     <!-- TAB 2: PIPELINES -->
     <div class="tab-pane" id="pane-pipelines">
       <div class="pane-toolbar">
-        <div class="pane-desc">P4 Pipelines &bull; GET /v1/pipelines</div>
+        <div class="pane-desc">P4 Pipeline Metadata &bull; GET /v1/pipelines</div>
         <div style="display:flex; gap:8px;">
           <button class="btn btn-ghost btn-sm" onclick="fetchPipelines()">Refresh</button>
-          <button class="btn btn-sm" onclick="openModal('modal-pipeline')">+ Deploy Pipeline</button>
+          <button class="btn btn-sm" onclick="openModal('modal-pipeline')">+ Register Pipeline</button>
         </div>
       </div>
 
@@ -965,10 +965,10 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
     </div>
   </div>
 
-  <!-- MODAL: DEPLOY PIPELINE -->
+  <!-- MODAL: REGISTER PIPELINE METADATA -->
   <div class="modal-backdrop" id="modal-pipeline">
     <div class="modal-box">
-      <div class="modal-head">Deploy Pipeline</div>
+      <div class="modal-head">Register Pipeline Metadata</div>
       <form onsubmit="submitPipeline(event)">
         <div class="field-box" style="margin-bottom:20px;">
           <label>Program</label>
@@ -979,7 +979,7 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:8px;">
           <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal('modal-pipeline')">Cancel</button>
-          <button type="submit" class="btn btn-sm">Deploy</button>
+          <button type="submit" class="btn btn-sm">Register</button>
         </div>
       </form>
     </div>
@@ -1033,20 +1033,57 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
         tbody.innerHTML = '';
         const list = data.ports || [];
         if (list.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:18px;">No ports configured.</td></tr>';
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.colSpan = 7;
+          td.style.cssText = 'text-align:center; padding:18px;';
+          td.textContent = 'No ports configured.';
+          tr.appendChild(td);
+          tbody.appendChild(tr);
           return;
         }
         list.forEach(function(p) {
           const tr = document.createElement('tr');
-          tr.innerHTML = [
-            '<td><strong>' + p.id + '</strong></td>',
-            '<td>' + (p.name || '') + '</td>',
-            '<td><code>' + p.mac_address + '</code></td>',
-            '<td>' + p.mtu + '</td>',
-            '<td>' + (p.speed || '100G') + '</td>',
-            '<td><span class="tag-state up">' + p.oper_state + '</span></td>',
-            '<td><button class="btn btn-ghost btn-sm" onclick="delPort(\'' + p.id + '\')">Delete</button></td>'
-          ].join('');
+
+          const tdId = document.createElement('td');
+          const strong = document.createElement('strong');
+          strong.textContent = p.id;
+          tdId.appendChild(strong);
+          tr.appendChild(tdId);
+
+          const tdName = document.createElement('td');
+          tdName.textContent = p.name || '';
+          tr.appendChild(tdName);
+
+          const tdMac = document.createElement('td');
+          const code = document.createElement('code');
+          code.textContent = p.mac_address;
+          tdMac.appendChild(code);
+          tr.appendChild(tdMac);
+
+          const tdMtu = document.createElement('td');
+          tdMtu.textContent = p.mtu;
+          tr.appendChild(tdMtu);
+
+          const tdSpeed = document.createElement('td');
+          tdSpeed.textContent = p.speed || '100G';
+          tr.appendChild(tdSpeed);
+
+          const tdState = document.createElement('td');
+          const stateSpan = document.createElement('span');
+          stateSpan.className = 'tag-state up';
+          stateSpan.textContent = p.oper_state;
+          tdState.appendChild(stateSpan);
+          tr.appendChild(tdState);
+
+          const tdAction = document.createElement('td');
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn btn-ghost btn-sm';
+          delBtn.textContent = 'Delete';
+          delBtn.addEventListener('click', function() { delPort(p.id); });
+          tdAction.appendChild(delBtn);
+          tr.appendChild(tdAction);
+
           tbody.appendChild(tr);
         });
       } catch (e) {
@@ -1087,17 +1124,45 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
         tbody.innerHTML = '';
         const list = data.pipelines || [];
         if (list.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:18px;">No pipelines deployed.</td></tr>';
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.colSpan = 4;
+          td.style.cssText = 'text-align:center; padding:18px;';
+          td.textContent = 'No pipelines deployed.';
+          tr.appendChild(td);
+          tbody.appendChild(tr);
           return;
         }
         list.forEach(function(pipe) {
           const tr = document.createElement('tr');
-          tr.innerHTML = [
-            '<td><strong>' + pipe.id + '</strong></td>',
-            '<td><code>' + pipe.p4_program + '</code></td>',
-            '<td><span class="tag-state up">' + (pipe.status || 'ACTIVE') + '</span></td>',
-            '<td><button class="btn btn-ghost btn-sm" onclick="delPipe(\'' + pipe.id + '\')">Delete</button></td>'
-          ].join('');
+
+          const tdId = document.createElement('td');
+          const strong = document.createElement('strong');
+          strong.textContent = pipe.id;
+          tdId.appendChild(strong);
+          tr.appendChild(tdId);
+
+          const tdProg = document.createElement('td');
+          const code = document.createElement('code');
+          code.textContent = pipe.p4_program;
+          tdProg.appendChild(code);
+          tr.appendChild(tdProg);
+
+          const tdStatus = document.createElement('td');
+          const statusSpan = document.createElement('span');
+          statusSpan.className = 'tag-state up';
+          statusSpan.textContent = pipe.status || 'ACTIVE';
+          tdStatus.appendChild(statusSpan);
+          tr.appendChild(tdStatus);
+
+          const tdAction = document.createElement('td');
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn btn-ghost btn-sm';
+          delBtn.textContent = 'Delete';
+          delBtn.addEventListener('click', function() { delPipe(pipe.id); });
+          tdAction.appendChild(delBtn);
+          tr.appendChild(tdAction);
+
           tbody.appendChild(tr);
         });
       } catch (e) {
