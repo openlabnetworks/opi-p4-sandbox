@@ -3,6 +3,10 @@
 Learn the full lifecycle of managing P4 pipelines through the OPI API:
 create → inspect → update → delete.
 
+> **Scope:** This experiment demonstrates the OPI server's in-memory pipeline
+> registry. It does not install forwarding pipelines in BMv2. P4Runtime-backed
+> pipeline management is planned in [issue #6](https://github.com/openlabnetworks/opi-p4-sandbox/issues/6).
+
 ## Prerequisites
 
 ```bash
@@ -97,5 +101,9 @@ You've mastered OPI pipeline lifecycle management:
 - Inspection and enumeration
 - Cleanup and deletion
 - Scripted automation
+
+These operations update only the OPI metadata registry. Use a separate
+P4Runtime client against BMv2 on `localhost:9559` when you need to install a
+forwarding pipeline.
 
 **Next:** Explore more advanced scenarios like traffic steering and telemetry.

@@ -150,6 +150,14 @@ bash scripts/load-p4-pipeline.sh firewall_drop.p4
 > [!IMPORTANT]
 > The REST pipeline endpoints are an in-memory metadata emulator and do not load a pipeline into BMv2. Use a P4Runtime client directly against `localhost:9559` to install a compiled program on the switch.
 
+### P4Runtime integration status
+
+The OPI server is not yet a P4Runtime client. Creating or deleting a pipeline
+through the REST API changes only the server's in-memory registry; it does not
+call BMv2's `SetForwardingPipelineConfig` or remove a configuration from the
+switch. Real P4Runtime-backed pipeline loading is planned and tracked in
+[issue #6](https://github.com/openlabnetworks/opi-p4-sandbox/issues/6).
+
 ### Run Automated Tests
 
 ```bash
