@@ -5,7 +5,7 @@ import (
 )
 
 // ServeUI renders the minimalist, editorial light-themed testing dashboard
-// for the OPI & P4 developer sandbox.
+// for the Intili Sandbox.
 func ServeUI(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -17,7 +17,7 @@ const dashboardHTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OPI & P4 Developer Sandbox</title>
+  <title>Intili Sandbox</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -860,7 +860,7 @@ const dashboardHTML = `<!DOCTYPE html>
   <!-- Minimal Nav -->
   <header class="site-header">
     <a href="/" class="brand">
-      <span>OPI.SANDBOX</span><span class="brand-dot">.</span>
+      <span>INTILI</span><span class="brand-dot">.</span><span>SANDBOX</span>
     </a>
     <nav class="site-nav">
       <a href="javascript:void(0)" onclick="selectTab('ports')">Ports</a>
@@ -894,7 +894,7 @@ const dashboardHTML = `<!DOCTYPE html>
 
       <div>
         <div class="hero-title">
-          <span class="title-black">OPI</span>
+          <span class="title-black">INTILI</span>
           <span class="title-stroke">SANDBOX</span>
         </div>
 
@@ -1198,7 +1198,7 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
 
   <!-- Minimal Footer -->
   <footer class="site-footer">
-    <div>OPI &amp; P4 DEVELOPER SANDBOX</div>
+    <div>INTILI SANDBOX</div>
     <div>LIGHTWEIGHT &bull; LINUX &bull; NO HARDWARE REQUIRED</div>
   </footer>
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# OPI & P4 Developer Sandbox — Packer AMI Provisioning Script
+# Intili Sandbox — Packer AMI Provisioning Script
 # ==============================================================================
 # This script provisions an Ubuntu 24.04 LTS instance to bake a production-ready,
-# zero-download AMI for the OPI & P4 Developer Sandbox.
+# zero-download AMI for Intili Sandbox.
 #
 # It installs:
 #   - Docker Engine & Docker Compose Plugin (Official Docker Repositories)
@@ -117,5 +117,5 @@ history -c || true
 
 echo "=========================================================="
 echo "✅ AMI Baking completed successfully!"
-echo "   OPI & P4 Sandbox is ready for instant boot."
+echo "   Intili Sandbox is ready for instant boot."
 echo "=========================================================="

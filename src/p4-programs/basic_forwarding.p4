@@ -1,6 +1,6 @@
 /* -*- P4_16 -*- */
 /*
- * basic_forwarding.p4 — Sample P4 Program for OPI Sandbox
+ * basic_forwarding.p4 — Sample P4 Program for Intili Sandbox
  *
  * This program implements basic L2/L3 forwarding with the following features:
  * - Ethernet header parsing

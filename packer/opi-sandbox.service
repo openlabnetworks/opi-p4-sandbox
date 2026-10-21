@@ -1,5 +1,5 @@
 [Unit]
-Description=OPI & P4 Developer Sandbox Docker Compose Service
+Description=Intili Sandbox Docker Compose Service
 Documentation=https://github.com/openlabnetworks/opi-p4-sandbox
 Requires=docker.service
 After=docker.service network-online.target

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# Smoke Test Script for OPI & P4 Sandbox
+# Smoke Test Script for Intili Sandbox
 # ============================================================
 # Validates end-to-end functionality of the sandbox.
 # Exit code 0 = all tests passed, non-zero = failure.
@@ -32,7 +32,7 @@ run_test() {
     fi
 }
 
-echo -e "${BOLD}🧪 OPI & P4 Sandbox — Smoke Tests${RESET}"
+echo -e "${BOLD}🧪 Intili Sandbox — Smoke Tests${RESET}"
 echo -e "${CYAN}═══════════════════════════════════════════${RESET}"
 echo ""
 

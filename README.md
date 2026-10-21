@@ -1,4 +1,4 @@
-# 🚀 OPI & P4 Developer Sandbox
+# 🚀 Intili Sandbox
 
 [![Build & Publish](https://github.com/openlabnetworks/opi-p4-sandbox/actions/workflows/build-publish.yml/badge.svg)](https://github.com/openlabnetworks/opi-p4-sandbox/actions/workflows/build-publish.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -88,7 +88,7 @@ curl http://localhost:8080/v1/ports | python3 -m json.tool
 }
 ```
 
-**🎉 You're in!** The OPI sandbox is running and ready for experiments.
+**🎉 You're in!** Intili Sandbox is running and ready for experiments.
 
 ---
 

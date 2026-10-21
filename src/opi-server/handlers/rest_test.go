@@ -32,7 +32,7 @@ func TestAPIInfo(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Name != "OPI P4 Sandbox API Server" {
+	if resp.Name != "Intili Sandbox API Server" {
 		t.Errorf("unexpected name: %s", resp.Name)
 	}
 	if len(resp.Services) != 2 {
@@ -268,7 +268,7 @@ func TestServeUI(t *testing.T) {
 			t.Errorf("expected text/html content-type on %s, got %s", path, ct)
 		}
 		body := rec.Body.String()
-		if !bytes.Contains([]byte(body), []byte("OPI & P4 Developer Sandbox")) {
+		if !bytes.Contains([]byte(body), []byte("Intili Sandbox")) {
 			t.Errorf("expected body to contain sandbox title on %s", path)
 		}
 	}

@@ -1,5 +1,5 @@
 # ============================================================
-# OPI & P4 Developer Sandbox — Docker Compose
+# Intili Sandbox — Docker Compose
 # ============================================================
 # Spins up the full sandbox environment:
 #   - OPI API Server (REST on :8080)

@@ -36,7 +36,7 @@ func main() {
 	}
 
 	log.Printf("╔══════════════════════════════════════════════════╗")
-	log.Printf("║        OPI API Server — Developer Sandbox        ║")
+	log.Printf("║          Intili Sandbox — OPI API Server         ║")
 	log.Printf("╠══════════════════════════════════════════════════╣")
 	log.Printf("║  REST API  : http://0.0.0.0:%-5d                ║", *restPort)
 	log.Printf("║  Log Level : %-6s                               ║", *logLevel)

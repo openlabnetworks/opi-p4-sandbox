@@ -1,4 +1,4 @@
-# Contributing to OPI & P4 Sandbox
+# Contributing to Intili Sandbox
 
 Thank you for your interest in contributing! This guide will help you get set up.
 
