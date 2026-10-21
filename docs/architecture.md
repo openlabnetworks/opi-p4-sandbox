@@ -46,6 +46,10 @@ This is intentional for a sandbox — it ensures a clean state for each experime
 Pipeline records are metadata only: the server does not connect to BMv2 or install
 programs through P4Runtime.
 
+Real P4Runtime-backed pipeline management remains planned work and is tracked in
+[issue #6](https://github.com/openlabnetworks/opi-p4-sandbox/issues/6). Until that
+integration is implemented, use a separate P4Runtime client to configure BMv2.
+
 ### API Design
 
 The API follows OPI resource naming conventions:
@@ -80,6 +84,9 @@ veth3 ←→ veth3_peer     (Port 3)
 3. Developer compiles a P4 program to BMv2 JSON
 4. Developer uses a P4Runtime client directly against BMv2 on :9559 to install the program
 5. BMv2 processes packets and receives table entries through that direct P4Runtime connection
+
+The OPI server's pipeline create and delete operations currently affect only the
+metadata registry. They do not install or remove the BMv2 forwarding pipeline.
 
 ## Technology Stack
 
