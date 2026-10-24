@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Intili Sandbox — Packer AMI Provisioning Script
+# OpenLanNetworks Sandbox — Packer AMI Provisioning Script
 # ==============================================================================
 # This script provisions an Ubuntu 24.04 LTS instance to bake a production-ready,
-# zero-download AMI for Intili Sandbox.
+# zero-download AMI for OpenLanNetworks Sandbox.
 #
 # It installs:
 #   - Docker Engine & Docker Compose Plugin (Official Docker Repositories)
@@ -117,5 +117,5 @@ history -c || true
 
 echo "=========================================================="
 echo "✅ AMI Baking completed successfully!"
-echo "   Intili Sandbox is ready for instant boot."
+echo "   OpenLanNetworks Sandbox is ready for instant boot."
 echo "=========================================================="

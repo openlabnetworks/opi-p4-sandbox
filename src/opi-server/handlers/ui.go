@@ -5,7 +5,7 @@ import (
 )
 
 // ServeUI renders the minimalist, editorial light-themed testing dashboard
-// for the Intili Sandbox.
+// for the OPENLABNETWORKS Open Sandbox.
 func ServeUI(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -17,7 +17,7 @@ const dashboardHTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Intili Sandbox</title>
+  <title>OPENLABNETWORKS | Open Sandbox</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -75,14 +75,15 @@ const dashboardHTML = `<!DOCTYPE html>
     .brand {
       font-family: var(--font-display);
       font-weight: 900;
-      font-size: 20px;
+      font-size: 16px;
       letter-spacing: -0.03em;
       text-transform: uppercase;
       color: var(--ink);
       text-decoration: none;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 0;
+      white-space: nowrap;
     }
     .brand-dot {
       color: var(--cobalt);
@@ -859,15 +860,16 @@ const dashboardHTML = `<!DOCTYPE html>
 
   <!-- Minimal Nav -->
   <header class="site-header">
-    <a href="/" class="brand">
-      <span>INTILI</span><span class="brand-dot">.</span><span>SANDBOX</span>
+    <a href="https://www.openlabnetworks.com/" class="brand" target="_blank" rel="noopener noreferrer">
+      <span>OPENLABNETWORKS</span>
     </a>
     <nav class="site-nav">
       <a href="javascript:void(0)" onclick="selectTab('ports')">Ports</a>
       <a href="javascript:void(0)" onclick="selectTab('pipelines')">Pipelines</a>
-      <a href="javascript:void(0)" onclick="selectTab('simulator')">P4 Sim</a>
+      <a href="javascript:void(0)" onclick="selectTab('simulator')">Offload Lab</a>
       <a href="javascript:void(0)" onclick="selectTab('console')">APIs</a>
       <a href="javascript:void(0)" onclick="selectTab('ami')">AMI</a>
+      <a href="/about">About</a>
     </nav>
     <div>
       <button class="btn btn-sm" onclick="runSmokeTest()">
@@ -879,8 +881,8 @@ const dashboardHTML = `<!DOCTYPE html>
 
   <!-- Editorial Meta Bar -->
   <div class="meta-rule-bar">
-    <span>OPI SPEC v1.0.0 &mdash; DPU OFF-LOAD</span>
-    <span>BMV2 P4_16 SWITCH</span>
+    <span>OPENLABNETWORKS &mdash; HARDWARE OFFLOAD</span>
+    <span>DPU / SMARTNIC READY</span>
     <span>STATUS: ONLINE &bull; 0ms LATENCY</span>
   </div>
 
@@ -894,7 +896,7 @@ const dashboardHTML = `<!DOCTYPE html>
 
       <div>
         <div class="hero-title">
-          <span class="title-black">INTILI</span>
+          <span class="title-black">OPEN</span>
           <span class="title-stroke">SANDBOX</span>
         </div>
 
@@ -909,7 +911,7 @@ const dashboardHTML = `<!DOCTYPE html>
             <span class="btn-circle-arrow">&rarr;</span>
           </button>
           <button class="btn btn-ghost" onclick="selectTab('simulator'); scrollToStudio();">
-            <span>Test P4 Flow</span>
+            <span>Explore Offload</span>
             <span style="font-size: 10px;">&darr;</span>
           </button>
         </div>
@@ -962,7 +964,7 @@ const dashboardHTML = `<!DOCTYPE html>
       <div class="tab-bar">
         <button class="tab-btn active" id="tab-btn-ports" onclick="selectTab('ports')">01 Ports</button>
         <button class="tab-btn" id="tab-btn-pipelines" onclick="selectTab('pipelines')">02 Pipelines</button>
-        <button class="tab-btn" id="tab-btn-simulator" onclick="selectTab('simulator')">03 P4 Simulator</button>
+        <button class="tab-btn" id="tab-btn-simulator" onclick="selectTab('simulator')">03 Offload Lab</button>
         <button class="tab-btn" id="tab-btn-console" onclick="selectTab('console')">04 REST Console</button>
         <button class="tab-btn" id="tab-btn-ami" onclick="selectTab('ami')">05 AWS AMI</button>
       </div>
@@ -999,7 +1001,7 @@ const dashboardHTML = `<!DOCTYPE html>
     <!-- TAB 2: PIPELINES -->
     <div class="tab-pane" id="pane-pipelines">
       <div class="pane-toolbar">
-        <div class="pane-desc">P4 Pipeline Metadata &bull; GET /v1/pipelines</div>
+        <div class="pane-desc">Dataplane Workflows &bull; GET /v1/pipelines</div>
         <div style="display:flex; gap:8px;">
           <button class="btn btn-ghost btn-sm" onclick="fetchPipelines()">Refresh</button>
           <button class="btn btn-sm" onclick="openModal('modal-pipeline')">+ Register Pipeline</button>
@@ -1010,7 +1012,7 @@ const dashboardHTML = `<!DOCTYPE html>
         <thead>
           <tr>
             <th>Pipeline ID</th>
-            <th>P4 Program</th>
+            <th>Workflow</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
@@ -1021,7 +1023,7 @@ const dashboardHTML = `<!DOCTYPE html>
       </table>
     </div>
 
-    <!-- TAB 3: P4 DATAPLANE SIMULATOR -->
+    <!-- TAB 3: HARDWARE OFFLOAD LAB -->
     <div class="tab-pane" id="pane-simulator">
       <div class="pane-toolbar">
         <div class="pane-desc">V1Model 5-Stage Dataplane Traversal</div>
@@ -1029,7 +1031,7 @@ const dashboardHTML = `<!DOCTYPE html>
 
       <div class="sim-strip">
         <div class="field-box">
-          <label>P4 Program</label>
+          <label>Dataplane workflow</label>
           <select id="sim-program">
             <option value="basic_forwarding.p4">basic_forwarding.p4 (L2/L3 Routing)</option>
             <option value="firewall_drop.p4">firewall_drop.p4 (IPv4 Filter)</option>
@@ -1198,8 +1200,8 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
 
   <!-- Minimal Footer -->
   <footer class="site-footer">
-    <div>INTILI SANDBOX</div>
-    <div>LIGHTWEIGHT &bull; LINUX &bull; NO HARDWARE REQUIRED</div>
+    <a href="https://www.openlabnetworks.com/" target="_blank" rel="noopener noreferrer">OPENLABNETWORKS</a>
+    <div>DPU &bull; SMARTNIC &bull; HARDWARE OFFLOAD</div>
   </footer>
 
   <script>
@@ -1463,6 +1465,107 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
       fetchPipelines();
     });
   </script>
+</body>
+</html>
+`
+
+// ServeAbout renders the project overview page separately from the interactive
+// workbench so visitors can understand the platform before using it.
+func ServeAbout(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(aboutHTML))
+}
+
+const aboutHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About | OPENLABNETWORKS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #102022;
+      --muted: #587074;
+      --line: #c9d7d3;
+      --paper: #f4f8f5;
+      --card: #ffffff;
+      --accent: #d96b3b;
+      --teal: #0e7771;
+      --mono: "DM Mono", monospace;
+      --sans: "Manrope", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(--sans); }
+    a { color: inherit; }
+    .about-nav { display: flex; justify-content: space-between; align-items: center; padding: 24px 7vw; border-bottom: 1px solid var(--line); }
+    .logo { text-decoration: none; font-weight: 800; letter-spacing: -.04em; }
+    .logo span { color: var(--accent); }
+    .back { font: 12px var(--mono); text-transform: uppercase; text-decoration: none; color: var(--muted); }
+    .about-main { max-width: 1180px; margin: 0 auto; padding: 84px 7vw 110px; }
+    .eyebrow { color: var(--teal); font: 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    h1 { max-width: 800px; margin: 18px 0 24px; font-size: clamp(48px, 8vw, 104px); line-height: .96; letter-spacing: -.07em; }
+    .intro { max-width: 680px; color: var(--muted); font-size: 20px; line-height: 1.65; }
+    .section { margin-top: 100px; }
+    h2 { margin: 0 0 14px; font-size: 34px; letter-spacing: -.05em; }
+    .section-lead { max-width: 650px; color: var(--muted); line-height: 1.7; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
+    .card { padding: 28px; min-height: 220px; background: var(--card); border: 1px solid var(--line); }
+    .number { color: var(--accent); font: 13px var(--mono); }
+    h3 { margin: 38px 0 10px; font-size: 21px; letter-spacing: -.03em; }
+    .card p, .architecture p { color: var(--muted); line-height: 1.65; }
+    .architecture { display: grid; grid-template-columns: .85fr 1.15fr; gap: 48px; align-items: start; }
+    .stack { border-left: 2px solid var(--accent); }
+    .layer { padding: 19px 22px; border-bottom: 1px solid var(--line); background: var(--card); }
+    .layer strong { display: block; margin-bottom: 5px; }
+    .layer span { color: var(--muted); font: 12px var(--mono); }
+    .about-footer { padding: 26px 7vw; border-top: 1px solid var(--line); color: var(--muted); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    @media (max-width: 760px) {
+      .about-nav { padding: 20px; }
+      .about-main { padding: 60px 20px 80px; }
+      .grid, .architecture { grid-template-columns: 1fr; }
+      .section { margin-top: 70px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="about-nav">
+    <a class="logo" href="/ui">OPENLABNETWORKS</a>
+    <a class="back" href="/ui">&larr; Open sandbox</a>
+  </header>
+  <main class="about-main">
+    <div class="eyebrow">OPENLABNETWORKS / Core use cases</div>
+    <h1>Move infrastructure work closer to the wire.</h1>
+    <p class="intro">OPENLABNETWORKS Open Sandbox is a practical environment for designing, validating, and demonstrating hardware-assisted networking workflows before dedicated DPU or SmartNIC hardware is available.</p>
+
+    <section class="section">
+      <h2>Built for the work between idea and hardware.</h2>
+      <p class="section-lead">The sandbox gives platform teams a repeatable place to exercise control APIs, packet-processing behavior, and deployment workflows. It shortens feedback loops without pretending that software emulation replaces production silicon.</p>
+      <div class="grid">
+        <article class="card"><div class="number">01 / DEVELOP</div><h3>Prototype offload services</h3><p>Model virtual ports, service boundaries, and packet-handling decisions while the hardware design is still evolving.</p></article>
+        <article class="card"><div class="number">02 / VALIDATE</div><h3>Test control-plane behavior</h3><p>Use a clean, resettable environment to validate client integrations, lifecycle operations, and health checks.</p></article>
+        <article class="card"><div class="number">03 / DEMONSTRATE</div><h3>Share a working path</h3><p>Give application and infrastructure teams a common, runnable reference for hardware-assisted networking concepts.</p></article>
+      </div>
+    </section>
+
+    <section class="section architecture">
+      <div>
+        <div class="eyebrow">System architecture</div>
+        <h2>Small surface. Clear boundaries.</h2>
+        <p>The environment separates the API control plane from the packet-processing target. That makes experiments observable and keeps the transition to a physical accelerator straightforward.</p>
+      </div>
+      <div class="stack">
+        <div class="layer"><strong>Developer experience</strong><span>Browser workbench · curl · smoke tests</span></div>
+        <div class="layer"><strong>Control plane</strong><span>Go service · REST resources · in-memory sandbox state</span></div>
+        <div class="layer"><strong>Acceleration target</strong><span>Software dataplane · virtual interfaces · programmable processing</span></div>
+        <div class="layer"><strong>Deployment layer</strong><span>Docker Compose · Linux · optional cloud image</span></div>
+      </div>
+    </section>
+  </main>
+  <footer class="about-footer">OPENLABNETWORKS &bull; DPU and SmartNIC enablement</footer>
 </body>
 </html>
 `

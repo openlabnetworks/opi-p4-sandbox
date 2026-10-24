@@ -62,6 +62,8 @@ func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *Pip
 	// Web Testing Dashboard
 	mux.HandleFunc("/ui", ServeUI)
 	mux.HandleFunc("/ui/", ServeUI)
+	mux.HandleFunc("/about", ServeAbout)
+	mux.HandleFunc("/about/", ServeAbout)
 
 	// API info
 	mux.HandleFunc("/", handleAPIInfo)
@@ -135,7 +137,7 @@ func handleAPIInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, APIInfoResponse{
-		Name:    "Intili Sandbox API Server",
+		Name:    "OpenLanNetworks Sandbox API Server",
 		Version: "0.1.0",
 		Services: []string{
 			"opi.v1.NetworkService",
@@ -397,7 +399,7 @@ func handleDeletePipeline(w http.ResponseWriter, r *http.Request, svc *PipelineS
 
 func writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-Intili-Sandbox", "true")
+	w.Header().Set("X-OpenLanNetworks-Sandbox", "true")
 	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		log.Printf("[REST] Error encoding response: %v", err)

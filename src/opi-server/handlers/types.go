@@ -73,7 +73,7 @@ type HealthResponse struct {
 
 // --- API Info ---
 
-// APIInfoResponse provides metadata about the Intili Sandbox server.
+// APIInfoResponse provides metadata about the OpenLanNetworks Sandbox server.
 type APIInfoResponse struct {
 	Name     string   `json:"name"`
 	Version  string   `json:"version"`

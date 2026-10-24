@@ -1,5 +1,5 @@
 # ============================================================
-# Intili Sandbox — Makefile
+# OpenLanNetworks Sandbox — Makefile
 # ============================================================
 # One-command interface for all sandbox operations.
 #
@@ -37,13 +37,14 @@ RESET  := \033[0m
 
 ## start-sandbox: Pull images and start the full sandbox environment
 start-sandbox: _check-docker
-	@echo "$(GREEN)$(BOLD)🚀 Starting Intili Sandbox...$(RESET)"
+	@echo "$(GREEN)$(BOLD)🚀 Starting OpenLanNetworks Sandbox...$(RESET)"
 	@echo ""
 	$(COMPOSE) up -d
 	@echo ""
 	@echo "$(GREEN)$(BOLD)✅ Sandbox is running!$(RESET)"
 	@echo ""
 	@echo "  Web Dashboard  : $(CYAN)$(OPI_URL)/ui$(RESET)"
+	@echo "  About          : $(CYAN)$(OPI_URL)/about$(RESET)"
 	@echo "  OPI API Server : $(CYAN)$(OPI_URL)$(RESET)"
 	@echo "  P4 BMv2 gRPC   : $(CYAN)localhost:$(P4_GRPC_PORT)$(RESET)"
 	@echo "  P4 BMv2 Thrift : $(CYAN)localhost:$(P4_THRIFT_PORT)$(RESET)"
@@ -140,7 +141,7 @@ endif
 
 ## ui: Open or display the Web Testing Dashboard URL
 ui:
-	@echo "$(GREEN)$(BOLD)🌐 Intili Sandbox Web Testing Dashboard:$(RESET) $(CYAN)$(OPI_URL)/ui$(RESET)"
+	@echo "$(GREEN)$(BOLD)🌐 OpenLanNetworks Web Testing Dashboard:$(RESET) $(CYAN)$(OPI_URL)/ui$(RESET)"
 	@which xdg-open >/dev/null 2>&1 && xdg-open $(OPI_URL)/ui || true
 
 # ============================================================
@@ -185,7 +186,7 @@ clean: stop-sandbox
 
 ## help: Show this help message
 help:
-	@echo "$(BOLD)Intili Sandbox$(RESET)"
+	@echo "$(BOLD)OpenLanNetworks Sandbox$(RESET)"
 	@echo "$(CYAN)═══════════════════════════════════════════$(RESET)"
 	@echo ""
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/## //' | \

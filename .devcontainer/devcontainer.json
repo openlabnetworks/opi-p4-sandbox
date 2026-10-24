@@ -8,7 +8,7 @@
 //   3. Sandbox auto-starts; ports auto-forward
 // ============================================================
 {
-  "name": "Intili Sandbox",
+  "name": "OpenLanNetworks Sandbox",
 
   // Use a feature-rich base image with Docker-in-Docker support
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",

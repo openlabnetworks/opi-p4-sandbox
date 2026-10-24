@@ -2,7 +2,7 @@
 
 ## System Overview
 
-Intili Sandbox provides a complete, containerized environment for
+OpenLanNetworks Sandbox provides a complete, containerized environment for
 experimenting with the Open Programmable Infrastructure (OPI) standard and P4
 programmable dataplanes — without requiring physical SmartNIC or DPU hardware.
 

@@ -1,4 +1,4 @@
-# Contributing to Intili Sandbox
+# Contributing to OpenLanNetworks Sandbox
 
 Thank you for your interest in contributing! This guide will help you get set up.
 

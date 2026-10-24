@@ -1,11 +1,11 @@
-# 🚀 Intili Sandbox
+# 🚀 OpenLanNetworks Sandbox
 
 [![Build & Publish](https://github.com/openlabnetworks/opi-p4-sandbox/actions/workflows/build-publish.yml/badge.svg)](https://github.com/openlabnetworks/opi-p4-sandbox/actions/workflows/build-publish.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/openlabnetworks/opi-p4-sandbox)
 
-**A 1-click sandbox for experimenting with [OPI (Open Programmable Infrastructure)](https://opiproject.org) APIs and [P4](https://p4.org) programmable dataplanes — no hardware required.**
+**A 1-click sandbox for experimenting with hardware-assisted networking workflows — no DPU or SmartNIC hardware required.**
 
 ---
 
@@ -88,7 +88,7 @@ curl http://localhost:8080/v1/ports | python3 -m json.tool
 }
 ```
 
-**🎉 You're in!** Intili Sandbox is running and ready for experiments.
+**🎉 You're in!** OpenLanNetworks Sandbox is running and ready for experiments.
 
 ---
 
@@ -97,6 +97,8 @@ curl http://localhost:8080/v1/ports | python3 -m json.tool
 Prefer a graphical interface? The sandbox includes a built-in, lightweight **Web Testing Dashboard** served directly by the OPI server.
 
 **Open in your browser:** [`http://localhost:8080/ui`](http://localhost:8080/ui) *(or `http://localhost:8080/`)*
+
+Learn about the platform's use cases and architecture at [`http://localhost:8080/about`](http://localhost:8080/about).
 
 ### Key Features
 
