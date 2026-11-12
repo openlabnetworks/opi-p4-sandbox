@@ -36,7 +36,7 @@ func main() {
 	}
 
 	log.Printf("╔══════════════════════════════════════════════════╗")
-	log.Printf("║     OpenLabNetworks Sandbox — API Server         ║")
+	log.Printf("║      ProtonNIC Sandbox — API Server              ║")
 	log.Printf("╠══════════════════════════════════════════════════╣")
 	log.Printf("║  REST API  : http://0.0.0.0:%-5d                ║", *restPort)
 	log.Printf("║  Log Level : %-6s                               ║", *logLevel)
@@ -79,7 +79,7 @@ func main() {
 		server.Close()
 	}()
 
-	log.Printf("OPI API server listening on :%d", *restPort)
+	log.Printf("ProtonNIC API server listening on :%d", *restPort)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Failed to serve: %v", err)
 	}

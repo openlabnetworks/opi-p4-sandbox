@@ -1,4 +1,4 @@
-# 🚀 OpenLabNetworks Sandbox
+# 🚀 ProtonNIC Sandbox
 
 [![Build & Publish](https://github.com/openlabnetworks/opi-p4-sandbox/actions/workflows/build-publish.yml/badge.svg)](https://github.com/openlabnetworks/opi-p4-sandbox/actions/workflows/build-publish.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -11,11 +11,11 @@
 
 ## What is this?
 
-This repository packages an **OPI API emulator** and a **P4 BMv2 software switch** into a pre-built, containerized sandbox that any developer can spin up in under 3 minutes. It lets you:
+ProtonNIC Sandbox packages a REST API and a **P4 BMv2 software switch** into a pre-built, containerized environment that any developer can spin up in under 3 minutes. It lets you:
 
-- 🔌 **Test OPI APIs** — Create and manage virtual network ports and P4 pipelines
+- 🔌 **Test ProtonNIC APIs** — Create and manage virtual network ports and P4 pipelines
 - 📝 **Write P4 programs** — Compile custom P4 dataplane programs for BMv2
-- 🧪 **Validate architectures** — Test your datapath offloading design against the OPI standard
+- 🧪 **Validate architectures** — Test your datapath offloading design before hardware is available
 - ☁️ **Run anywhere** — Locally with Docker, or in the cloud with GitHub Codespaces
 
 ## Architecture
@@ -24,7 +24,7 @@ This repository packages an **OPI API emulator** and a **P4 BMv2 software switch
 ┌──────────────── Docker Compose ────────────────────┐
 │                                                     │
 │   ┌────────────────┐       ┌────────────────────┐   │
-│   │  OPI Server    │       │  P4 BMv2 Switch    │   │
+│   │ ProtonNIC API  │       │  P4 BMv2 Switch    │   │
 │   │  REST :8080    │       │  P4Runtime :9559   │   │
 │   │                │       │  Thrift    :9090   │   │
 │   │  • NetworkSvc  │       │  • simple_switch   │   │
@@ -62,13 +62,13 @@ cd opi-p4-sandbox
 make start-sandbox
 ```
 
-This pulls pre-built images and starts the OPI server + P4 switch. Takes ~30 seconds on first run.
+This pulls pre-built images and starts the ProtonNIC API + P4 switch. Takes ~30 seconds on first run.
 
 ### Step 3: Send Your First API Call
 
 ```bash
 # List all network ports
-curl http://localhost:8080/v1/ports | python3 -m json.tool
+curl http://localhost:8080/api/v1/ports | python3 -m json.tool
 ```
 
 **Expected output:**
@@ -88,13 +88,13 @@ curl http://localhost:8080/v1/ports | python3 -m json.tool
 }
 ```
 
-**🎉 You're in!** OpenLabNetworks Sandbox is running and ready for experiments.
+**🎉 You're in!** ProtonNIC Sandbox is running and ready for experiments.
 
 ---
 
 ## 🌐 Interactive Web Testing Dashboard
 
-Prefer a graphical interface? The sandbox includes a built-in, lightweight **Web Testing Dashboard** served directly by the OPI server.
+Prefer a graphical interface? The sandbox includes a built-in, lightweight **Web Testing Dashboard** served directly by the ProtonNIC API.
 
 **Open in your browser:** [`http://localhost:8080/ui`](http://localhost:8080/ui) *(or `http://localhost:8080/`)*
 
@@ -106,7 +106,7 @@ Learn about the platform's use cases and architecture at [`http://localhost:8080
 - 🔌 **Live Port Manager**: View active ports, create new virtual SmartNIC ports with 1-click random MAC generation, and delete ports in real-time.
 - 📦 **P4 Pipeline Registry**: Inspect registered pipeline metadata and register P4 programs (`basic_forwarding.p4`, `firewall_drop.p4`).
 - ⚡ **Interactive 5-Stage Dataplane Packet Simulator**: Send simulated packets through Parser ➔ Verify Checksum ➔ Ingress Match-Action ➔ Egress ➔ Deparser with animated visual traversal and instant PASS / DROP security verdicts.
-- 💻 **Interactive REST API Console**: Fire test requests (`GET /healthz`, `GET /v1/ports`, `POST /v1/ports`) and copy generated `curl` commands.
+- 💻 **Interactive REST API Console**: Fire test requests (`GET /healthz`, `GET /api/v1/ports`, `POST /api/v1/ports`) and copy generated `curl` commands.
 - 🧪 **One-Click Browser Smoke Test**: Run the complete automated test suite with a single click.
 
 ---
@@ -116,7 +116,7 @@ Learn about the platform's use cases and architecture at [`http://localhost:8080
 ### Create a Virtual Port
 
 ```bash
-curl -X POST http://localhost:8080/v1/ports \
+curl -X POST http://localhost:8080/api/v1/ports \
   -H "Content-Type: application/json" \
   -d '{"mac_address": "de:ad:be:ef:00:01", "mtu": 9000}' \
   | python3 -m json.tool
@@ -126,10 +126,10 @@ curl -X POST http://localhost:8080/v1/ports \
 
 ```bash
 # List all active pipelines
-curl http://localhost:8080/v1/pipelines | python3 -m json.tool
+curl http://localhost:8080/api/v1/pipelines | python3 -m json.tool
 
 # Register a custom pipeline
-curl -X POST http://localhost:8080/v1/pipelines \
+curl -X POST http://localhost:8080/api/v1/pipelines \
   -H "Content-Type: application/json" \
   -d '{"p4_program": "firewall_drop.p4"}' \
   | python3 -m json.tool
@@ -243,14 +243,14 @@ make ami-build
 | `GET` | `/ui` | Interactive Web Testing Dashboard |
 | `GET` | `/healthz` | Server health check |
 | `GET` | `/` | API info (returns Web UI for browsers, JSON for API/curl) |
-| `GET` | `/v1/ports` | List all ports |
-| `POST` | `/v1/ports` | Create a new port |
-| `GET` | `/v1/ports/{id}` | Get a specific port |
-| `DELETE` | `/v1/ports/{id}` | Delete a port |
-| `GET` | `/v1/pipelines` | List all pipelines |
-| `POST` | `/v1/pipelines` | Create a new pipeline |
-| `GET` | `/v1/pipelines/{id}` | Get a specific pipeline |
-| `DELETE` | `/v1/pipelines/{id}` | Delete a pipeline |
+| `GET` | `/api/v1/ports` | List all ports |
+| `POST` | `/api/v1/ports` | Create a new port |
+| `GET` | `/api/v1/ports/{id}` | Get a specific port |
+| `DELETE` | `/api/v1/ports/{id}` | Delete a port |
+| `GET` | `/api/v1/pipelines` | List all pipelines |
+| `POST` | `/api/v1/pipelines` | Create a new pipeline |
+| `GET` | `/api/v1/pipelines/{id}` | Get a specific pipeline |
+| `DELETE` | `/api/v1/pipelines/{id}` | Delete a pipeline |
 
 ### Configuration
 

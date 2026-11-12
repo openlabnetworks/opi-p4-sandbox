@@ -21,6 +21,10 @@ import (
 
 const maxRequestBodyBytes = 1 << 20
 
+// apiBasePath is the public, product-neutral API namespace. Keep the legacy
+// /v1 routes registered below so existing sandbox clients continue to work.
+const apiBasePath = "/api/v1"
+
 // Validation patterns for user-supplied input.
 var (
 	// macRegex matches standard 6-octet colon-separated MAC addresses.
@@ -57,7 +61,7 @@ func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) boo
 	return true
 }
 
-// RegisterRESTRoutes registers all OPI-style REST API routes on the given mux.
+// RegisterRESTRoutes registers the ProtonNIC REST API routes on the given mux.
 func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *PipelineService) {
 	// Web Testing Dashboard
 	mux.HandleFunc("/ui", ServeUI)
@@ -69,8 +73,15 @@ func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *Pip
 	mux.HandleFunc("/", handleAPIInfo)
 	mux.HandleFunc("/healthz", handleHealthz)
 
+	registerAPIResourceRoutes(mux, apiBasePath, netSvc, pipeSvc)
+	// /v1 was the original public API base. Retain it as a compatibility alias;
+	// all product documentation and UI links use /api/v1.
+	registerAPIResourceRoutes(mux, "/v1", netSvc, pipeSvc)
+}
+
+func registerAPIResourceRoutes(mux *http.ServeMux, basePath string, netSvc *NetworkService, pipeSvc *PipelineService) {
 	// Network service
-	mux.HandleFunc("/v1/ports", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(basePath+"/ports", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			handleListPorts(w, r, netSvc)
@@ -80,8 +91,8 @@ func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *Pip
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
-	mux.HandleFunc("/v1/ports/", func(w http.ResponseWriter, r *http.Request) {
-		portId := strings.TrimPrefix(r.URL.Path, "/v1/ports/")
+	mux.HandleFunc(basePath+"/ports/", func(w http.ResponseWriter, r *http.Request) {
+		portId := strings.TrimPrefix(r.URL.Path, basePath+"/ports/")
 		if portId == "" {
 			http.Error(w, "port_id required", http.StatusBadRequest)
 			return
@@ -97,7 +108,7 @@ func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *Pip
 	})
 
 	// Pipeline service
-	mux.HandleFunc("/v1/pipelines", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(basePath+"/pipelines", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			handleListPipelines(w, r, pipeSvc)
@@ -107,8 +118,8 @@ func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *Pip
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
-	mux.HandleFunc("/v1/pipelines/", func(w http.ResponseWriter, r *http.Request) {
-		pipelineId := strings.TrimPrefix(r.URL.Path, "/v1/pipelines/")
+	mux.HandleFunc(basePath+"/pipelines/", func(w http.ResponseWriter, r *http.Request) {
+		pipelineId := strings.TrimPrefix(r.URL.Path, basePath+"/pipelines/")
 		if pipelineId == "" {
 			http.Error(w, "pipeline_id required", http.StatusBadRequest)
 			return
@@ -137,13 +148,13 @@ func handleAPIInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, APIInfoResponse{
-		Name:    "OpenLabNetworks Sandbox API Server",
+		Name:    "ProtonNIC Sandbox API Server",
 		Version: "0.1.0",
 		Services: []string{
-			"opi.v1.NetworkService",
-			"opi.v1.PipelineService",
+			"protonnic.v1.PortService",
+			"protonnic.v1.PipelineService",
 		},
-		DocsURL: "https://github.com/openlabnetworks/opi-p4-sandbox",
+		DocsURL: "/ui",
 	})
 }
 
@@ -151,8 +162,8 @@ func handleHealthz(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, HealthResponse{
 		Status: "SERVING",
 		Services: map[string]string{
-			"opi.v1.NetworkService":  "SERVING",
-			"opi.v1.PipelineService": "SERVING",
+			"protonnic.v1.PortService":     "SERVING",
+			"protonnic.v1.PipelineService": "SERVING",
 		},
 	})
 }
@@ -399,7 +410,7 @@ func handleDeletePipeline(w http.ResponseWriter, r *http.Request, svc *PipelineS
 
 func writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-OpenLabNetworks-Sandbox", "true")
+	w.Header().Set("X-ProtonNIC-Sandbox", "true")
 	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		log.Printf("[REST] Error encoding response: %v", err)

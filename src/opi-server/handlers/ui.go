@@ -5,7 +5,7 @@ import (
 )
 
 // ServeUI renders the minimalist, editorial light-themed testing dashboard
-// for the OPENLABNETWORKS Open Sandbox.
+// for the OPENLABNETWORKS ProtonNIC Sandbox.
 func ServeUI(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -17,7 +17,7 @@ const dashboardHTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OPENLABNETWORKS | Open Sandbox</title>
+  <title>ProtonNIC Sandbox | OPENLABNETWORKS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -861,7 +861,7 @@ const dashboardHTML = `<!DOCTYPE html>
   <!-- Minimal Nav -->
   <header class="site-header">
     <a href="https://www.openlabnetworks.com/" class="brand" target="_blank" rel="noopener noreferrer">
-      <span>OPENLABNETWORKS</span>
+      <span>PROTONNIC SANDBOX</span>
     </a>
     <nav class="site-nav">
       <a href="javascript:void(0)" onclick="selectTab('ports')">Ports</a>
@@ -881,7 +881,7 @@ const dashboardHTML = `<!DOCTYPE html>
 
   <!-- Editorial Meta Bar -->
   <div class="meta-rule-bar">
-    <span>OPENLABNETWORKS &mdash; HARDWARE OFFLOAD</span>
+    <span>PROTONNIC SANDBOX &mdash; HARDWARE OFFLOAD</span>
     <span>DPU / SMARTNIC READY</span>
     <span>STATUS: ONLINE &bull; 0ms LATENCY</span>
   </div>
@@ -896,8 +896,8 @@ const dashboardHTML = `<!DOCTYPE html>
 
       <div>
         <div class="hero-title">
-          <span class="title-black">OPEN</span>
-          <span class="title-stroke">SANDBOX</span>
+          <span class="title-black">PROTO</span>
+          <span class="title-stroke">NIC</span>
         </div>
 
         <div class="hero-lead">
@@ -919,7 +919,7 @@ const dashboardHTML = `<!DOCTYPE html>
 
       <div class="hero-footer-meta">
         <div>01 &mdash; 05 // SYSTEM TEST</div>
-        <div>{ REST METADATA // BMV2 CONTROL SEPARATE }</div>
+        <div>{ PROTONNIC REST API // BMV2 CONTROL SEPARATE }</div>
       </div>
     </div>
 
@@ -973,7 +973,7 @@ const dashboardHTML = `<!DOCTYPE html>
     <!-- TAB 1: PORTS -->
     <div class="tab-pane active" id="pane-ports">
       <div class="pane-toolbar">
-        <div class="pane-desc">Network Ports &bull; GET /v1/ports</div>
+        <div class="pane-desc">Network Ports &bull; GET /api/v1/ports</div>
         <div style="display:flex; gap:8px;">
           <button class="btn btn-ghost btn-sm" onclick="fetchPorts()">Refresh</button>
           <button class="btn btn-sm" onclick="openModal('modal-port')">+ Create Port</button>
@@ -1001,7 +1001,7 @@ const dashboardHTML = `<!DOCTYPE html>
     <!-- TAB 2: PIPELINES -->
     <div class="tab-pane" id="pane-pipelines">
       <div class="pane-toolbar">
-        <div class="pane-desc">Dataplane Workflows &bull; GET /v1/pipelines</div>
+        <div class="pane-desc">Dataplane Workflows &bull; GET /api/v1/pipelines</div>
         <div style="display:flex; gap:8px;">
           <button class="btn btn-ghost btn-sm" onclick="fetchPipelines()">Refresh</button>
           <button class="btn btn-sm" onclick="openModal('modal-pipeline')">+ Register Pipeline</button>
@@ -1107,20 +1107,20 @@ const dashboardHTML = `<!DOCTYPE html>
             <span>GET /healthz</span>
             <span style="color:#10b981; font-weight:700;">&bull;</span>
           </button>
-          <button class="api-item" onclick="callApi('GET', '/v1/ports')">
-            <span>GET /v1/ports</span>
+          <button class="api-item" onclick="callApi('GET', '/api/v1/ports')">
+            <span>GET /api/v1/ports</span>
             <span>&rarr;</span>
           </button>
-          <button class="api-item" onclick="callApi('POST', '/v1/ports', {mac_address: randomMac(), mtu: 1500})">
-            <span>POST /v1/ports</span>
+          <button class="api-item" onclick="callApi('POST', '/api/v1/ports', {mac_address: randomMac(), mtu: 1500})">
+            <span>POST /api/v1/ports</span>
             <span>+</span>
           </button>
-          <button class="api-item" onclick="callApi('GET', '/v1/pipelines')">
-            <span>GET /v1/pipelines</span>
+          <button class="api-item" onclick="callApi('GET', '/api/v1/pipelines')">
+            <span>GET /api/v1/pipelines</span>
             <span>&rarr;</span>
           </button>
-          <button class="api-item" onclick="callApi('POST', '/v1/pipelines', {p4_program: 'firewall_drop.p4'})">
-            <span>POST /v1/pipelines</span>
+          <button class="api-item" onclick="callApi('POST', '/api/v1/pipelines', {p4_program: 'firewall_drop.p4'})">
+            <span>POST /api/v1/pipelines</span>
             <span>+</span>
           </button>
         </div>
@@ -1136,20 +1136,17 @@ const dashboardHTML = `<!DOCTYPE html>
       </div>
 
       <p style="font-family:var(--font-mono); font-size:12px; line-height:1.6; margin-bottom:16px;">
-        Zero download time at boot. Pre-bakes Docker, BMv2, and OPI images directly into the AMI filesystem.
+        Zero download time at boot. Pre-bakes Docker, BMv2, and the ProtonNIC service images directly into the AMI filesystem.
       </p>
 
       <div style="background:#111215; color:#e4e4e7; padding:16px; font-family:var(--font-mono); font-size:11px; margin-bottom:16px; line-height:1.5;">
-# 1. Initialize Packer plugin<br>
-packer init packer/opi-sandbox.pkr.hcl<br><br>
-# 2. Build the AMI (AWS credentials required)<br>
-packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
-# 3. Launch from AWS Console -&gt; "My AMIs" -&gt; opi-p4-sandbox-v1.0.0<br>
-# Service auto-starts on boot via /etc/systemd/system/opi-sandbox.service
+# Build a ProtonNIC sandbox AMI with Packer<br><br>
+# Launch it from AWS Console -&gt; "My AMIs"<br><br>
+# The ProtonNIC service auto-starts on boot
       </div>
 
       <div style="font-family:var(--font-mono); font-size:11px; color:var(--ink-muted);">
-        Template file: <code>packer/opi-sandbox.pkr.hcl</code> &bull; Systemd: <code>/etc/systemd/system/opi-sandbox.service</code>
+        A pre-baked image provides a self-contained ProtonNIC development environment.
       </div>
     </div>
   </section>
@@ -1240,7 +1237,7 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
 
     async function fetchPorts() {
       try {
-        const res = await fetch(API + '/v1/ports');
+        const res = await fetch(API + '/api/v1/ports');
         const data = await res.json();
         const tbody = document.getElementById('ports-tbody');
         tbody.innerHTML = '';
@@ -1309,7 +1306,7 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
       const mac = document.getElementById('m-mac').value.trim();
       const mtu = parseInt(document.getElementById('m-mtu').value, 10);
       try {
-        const res = await fetch(API + '/v1/ports', {
+        const res = await fetch(API + '/api/v1/ports', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ mac_address: mac, mtu: mtu })
@@ -1325,13 +1322,13 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
 
     async function delPort(id) {
       if (!confirm('Delete port ' + id + '?')) return;
-      await fetch(API + '/v1/ports/' + id, { method: 'DELETE' });
+      await fetch(API + '/api/v1/ports/' + id, { method: 'DELETE' });
       fetchPorts();
     }
 
     async function fetchPipelines() {
       try {
-        const res = await fetch(API + '/v1/pipelines');
+        const res = await fetch(API + '/api/v1/pipelines');
         const data = await res.json();
         const tbody = document.getElementById('pipelines-tbody');
         tbody.innerHTML = '';
@@ -1387,7 +1384,7 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
       e.preventDefault();
       const prog = document.getElementById('m-pipe-prog').value;
       try {
-        const res = await fetch(API + '/v1/pipelines', {
+        const res = await fetch(API + '/api/v1/pipelines', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ p4_program: prog })
@@ -1403,7 +1400,7 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
 
     async function delPipe(id) {
       if (!confirm('Delete pipeline ' + id + '?')) return;
-      await fetch(API + '/v1/pipelines/' + id, { method: 'DELETE' });
+      await fetch(API + '/api/v1/pipelines/' + id, { method: 'DELETE' });
       fetchPipelines();
     }
 
@@ -1456,7 +1453,7 @@ packer build -var="aws_region=us-east-1" packer/opi-sandbox.pkr.hcl<br><br>
       selectTab('console');
       scrollToStudio();
       await callApi('GET', '/healthz');
-      await callApi('GET', '/v1/ports');
+      await callApi('GET', '/api/v1/ports');
       fetchPorts();
     }
 
@@ -1482,7 +1479,7 @@ const aboutHTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About | OPENLABNETWORKS</title>
+  <title>About | ProtonNIC Sandbox</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
@@ -1533,13 +1530,13 @@ const aboutHTML = `<!DOCTYPE html>
 </head>
 <body>
   <header class="about-nav">
-    <a class="logo" href="/ui">OPENLABNETWORKS</a>
-    <a class="back" href="/ui">&larr; Open sandbox</a>
+    <a class="logo" href="/ui">ProtonNIC Sandbox</a>
+    <a class="back" href="/ui">&larr; ProtonNIC sandbox</a>
   </header>
   <main class="about-main">
-    <div class="eyebrow">OPENLABNETWORKS / Core use cases</div>
+    <div class="eyebrow">ProtonNIC Sandbox / Core use cases</div>
     <h1>Move infrastructure work closer to the wire.</h1>
-    <p class="intro">OPENLABNETWORKS Open Sandbox is a practical environment for designing, validating, and demonstrating hardware-assisted networking workflows before dedicated DPU or SmartNIC hardware is available.</p>
+    <p class="intro">ProtonNIC Sandbox is a practical environment for designing, validating, and demonstrating hardware-assisted networking workflows before dedicated DPU or SmartNIC hardware is available.</p>
 
     <section class="section">
       <h2>Built for the work between idea and hardware.</h2>
@@ -1565,7 +1562,7 @@ const aboutHTML = `<!DOCTYPE html>
       </div>
     </section>
   </main>
-  <footer class="about-footer">OPENLABNETWORKS &bull; DPU and SmartNIC enablement</footer>
+  <footer class="about-footer">ProtonNIC Sandbox &bull; DPU and SmartNIC enablement</footer>
 </body>
 </html>
 `

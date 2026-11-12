@@ -32,14 +32,41 @@ func TestAPIInfo(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Name != "OpenLabNetworks Sandbox API Server" {
+	if resp.Name != "ProtonNIC Sandbox API Server" {
 		t.Errorf("unexpected name: %s", resp.Name)
 	}
-	if rec.Header().Get("X-OpenLabNetworks-Sandbox") != "true" {
-		t.Errorf("expected X-OpenLabNetworks-Sandbox header to be true, got %q", rec.Header().Get("X-OpenLabNetworks-Sandbox"))
+	if rec.Header().Get("X-ProtonNIC-Sandbox") != "true" {
+		t.Errorf("expected X-ProtonNIC-Sandbox header to be true, got %q", rec.Header().Get("X-ProtonNIC-Sandbox"))
 	}
-	if len(resp.Services) != 2 {
-		t.Errorf("expected 2 services, got %d", len(resp.Services))
+	if got, want := resp.Services, []string{"protonnic.v1.PortService", "protonnic.v1.PipelineService"}; !equalStrings(got, want) {
+		t.Errorf("unexpected services: got %v, want %v", got, want)
+	}
+	if resp.DocsURL != "/ui" {
+		t.Errorf("unexpected docs URL: %q", resp.DocsURL)
+	}
+}
+
+func equalStrings(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func TestProtonNICAPIRoutes(t *testing.T) {
+	mux := setupTestServer()
+	for _, path := range []string{"/api/v1/ports", "/api/v1/ports/port-0", "/api/v1/pipelines", "/api/v1/pipelines/pipeline-default"} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Errorf("GET %s: expected 200, got %d", path, rec.Code)
+		}
 	}
 }
 
@@ -272,7 +299,7 @@ func TestServeUI(t *testing.T) {
 			t.Errorf("expected text/html content-type on %s, got %s", path, ct)
 		}
 		body := rec.Body.String()
-		if !bytes.Contains([]byte(body), []byte("OPENLABNETWORKS")) {
+		if !bytes.Contains([]byte(body), []byte("ProtonNIC Sandbox")) {
 			t.Errorf("expected body to contain sandbox title on %s", path)
 		}
 	}
@@ -292,7 +319,7 @@ func TestServeAbout(t *testing.T) {
 		t.Fatalf("expected HTML content type, got %s", rec.Header().Get("Content-Type"))
 	}
 	body := rec.Body.String()
-	for _, section := range []string{"OPENLABNETWORKS", "Core use cases", "System architecture"} {
+	for _, section := range []string{"ProtonNIC Sandbox", "Core use cases", "System architecture"} {
 		if !bytes.Contains([]byte(body), []byte(section)) {
 			t.Errorf("expected /about to contain %q", section)
 		}
