@@ -32,8 +32,11 @@ func TestAPIInfo(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Name != "OpenLanNetworks Sandbox API Server" {
+	if resp.Name != "OpenLabNetworks Sandbox API Server" {
 		t.Errorf("unexpected name: %s", resp.Name)
+	}
+	if rec.Header().Get("X-OpenLabNetworks-Sandbox") != "true" {
+		t.Errorf("expected X-OpenLabNetworks-Sandbox header to be true, got %q", rec.Header().Get("X-OpenLabNetworks-Sandbox"))
 	}
 	if len(resp.Services) != 2 {
 		t.Errorf("expected 2 services, got %d", len(resp.Services))

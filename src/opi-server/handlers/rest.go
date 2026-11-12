@@ -137,7 +137,7 @@ func handleAPIInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, APIInfoResponse{
-		Name:    "OpenLanNetworks Sandbox API Server",
+		Name:    "OpenLabNetworks Sandbox API Server",
 		Version: "0.1.0",
 		Services: []string{
 			"opi.v1.NetworkService",
@@ -399,7 +399,7 @@ func handleDeletePipeline(w http.ResponseWriter, r *http.Request, svc *PipelineS
 
 func writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-OpenLanNetworks-Sandbox", "true")
+	w.Header().Set("X-OpenLabNetworks-Sandbox", "true")
 	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		log.Printf("[REST] Error encoding response: %v", err)

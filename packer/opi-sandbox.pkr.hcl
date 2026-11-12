@@ -1,5 +1,5 @@
 # ==============================================================================
-# OpenLanNetworks Sandbox — HashiCorp Packer Template (AWS AMI)
+# OpenLabNetworks Sandbox — HashiCorp Packer Template (AWS AMI)
 # ==============================================================================
 # Builds a pre-baked, production-ready Amazon Machine Image (AMI) for AWS EC2.
 # When an instance is launched from this AMI:

@@ -1,5 +1,5 @@
 # ============================================================
-# OpenLanNetworks Sandbox — Makefile
+# OpenLabNetworks Sandbox — Makefile
 # ============================================================
 # One-command interface for all sandbox operations.
 #
@@ -37,7 +37,7 @@ RESET  := \033[0m
 
 ## start-sandbox: Pull images and start the full sandbox environment
 start-sandbox: _check-docker
-	@echo "$(GREEN)$(BOLD)🚀 Starting OpenLanNetworks Sandbox...$(RESET)"
+	@echo "$(GREEN)$(BOLD)🚀 Starting OpenLabNetworks Sandbox...$(RESET)"
 	@echo ""
 	$(COMPOSE) up -d
 	@echo ""
@@ -141,7 +141,7 @@ endif
 
 ## ui: Open or display the Web Testing Dashboard URL
 ui:
-	@echo "$(GREEN)$(BOLD)🌐 OpenLanNetworks Web Testing Dashboard:$(RESET) $(CYAN)$(OPI_URL)/ui$(RESET)"
+	@echo "$(GREEN)$(BOLD)🌐 OpenLabNetworks Web Testing Dashboard:$(RESET) $(CYAN)$(OPI_URL)/ui$(RESET)"
 	@which xdg-open >/dev/null 2>&1 && xdg-open $(OPI_URL)/ui || true
 
 # ============================================================
@@ -186,7 +186,7 @@ clean: stop-sandbox
 
 ## help: Show this help message
 help:
-	@echo "$(BOLD)OpenLanNetworks Sandbox$(RESET)"
+	@echo "$(BOLD)OpenLabNetworks Sandbox$(RESET)"
 	@echo "$(CYAN)═══════════════════════════════════════════$(RESET)"
 	@echo ""
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/## //' | \

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# Smoke Test Script for OpenLanNetworks Sandbox
+# Smoke Test Script for OpenLabNetworks Sandbox
 # ============================================================
 # Validates end-to-end functionality of the sandbox.
 # Exit code 0 = all tests passed, non-zero = failure.
@@ -32,7 +32,7 @@ run_test() {
     fi
 }
 
-echo -e "${BOLD}🧪 OpenLanNetworks Sandbox — Smoke Tests${RESET}"
+echo -e "${BOLD}🧪 OpenLabNetworks Sandbox — Smoke Tests${RESET}"
 echo -e "${CYAN}═══════════════════════════════════════════${RESET}"
 echo ""
 
@@ -57,7 +57,7 @@ run_test "Health check returns OK" \
     "curl -sf ${OPI_URL}/healthz | grep -q SERVING"
 
 run_test "API info endpoint" \
-    "curl -sf ${OPI_URL}/ | grep -q 'OPI P4 Sandbox'"
+    "curl -sf ${OPI_URL}/ | grep -q 'OpenLabNetworks Sandbox'"
 
 run_test "List ports returns JSON array" \
     "curl -sf ${OPI_URL}/v1/ports | python3 -c 'import json,sys; data=json.load(sys.stdin); assert \"ports\" in data'"
