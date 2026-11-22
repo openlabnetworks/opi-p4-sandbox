@@ -68,6 +68,8 @@ func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *Pip
 	mux.HandleFunc("/ui/", ServeUI)
 	mux.HandleFunc("/about", ServeAbout)
 	mux.HandleFunc("/about/", ServeAbout)
+	mux.HandleFunc("/security", ServeSecurityPage)
+	mux.HandleFunc("/security/", ServeSecurityPage)
 
 	// API info
 	mux.HandleFunc("/", handleAPIInfo)
