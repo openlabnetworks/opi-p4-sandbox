@@ -326,6 +326,98 @@ func TestServeAbout(t *testing.T) {
 	}
 }
 
+func TestServeSecurity(t *testing.T) {
+	mux := setupTestServer()
+
+	for _, path := range []string{"/security", "/security/"} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 on %s, got %d", path, rec.Code)
+		}
+		if rec.Header().Get("Content-Type") != "text/html; charset=utf-8" {
+			t.Fatalf("expected HTML content type on %s, got %s", path, rec.Header().Get("Content-Type"))
+		}
+		body := rec.Body.String()
+		for _, section := range []string{"SECURE", "NetworkPolicy attack simulator", "/api/v1/security/offload/simulations"} {
+			if !bytes.Contains([]byte(body), []byte(section)) {
+				t.Errorf("expected /security to contain %q", section)
+			}
+		}
+	}
+}
+
+func TestSecurityOffloadSimulation(t *testing.T) {
+	mux := setupTestServer()
+
+	tests := []struct {
+		name         string
+		body         string
+		wantStatus   int
+		wantDecision string
+	}{
+		{
+			name:         "deny",
+			body:         `{"source_namespace":"payments","destination_namespace":"inventory","protocol":"TCP","destination_port":443,"policy_action":"deny"}`,
+			wantStatus:   http.StatusOK,
+			wantDecision: "DENY",
+		},
+		{
+			name:         "allow",
+			body:         `{"source_namespace":"frontend","destination_namespace":"payments","protocol":"UDP","destination_port":53,"policy_action":"allow"}`,
+			wantStatus:   http.StatusOK,
+			wantDecision: "ALLOW",
+		},
+		{
+			name:         "SYN flood threat",
+			body:         `{"source_namespace":"internet","destination_namespace":"payments","protocol":"TCP","destination_port":443,"policy_action":"allow","attack_type":"syn_flood"}`,
+			wantStatus:   http.StatusOK,
+			wantDecision: "DENY",
+		},
+		{
+			name:       "invalid namespace",
+			body:       `{"source_namespace":"NOT VALID","destination_namespace":"inventory","protocol":"TCP","destination_port":443,"policy_action":"deny"}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "invalid port",
+			body:       `{"source_namespace":"payments","destination_namespace":"inventory","protocol":"TCP","destination_port":70000,"policy_action":"deny"}`,
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/security/offload/simulations", bytes.NewBufferString(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+			mux.ServeHTTP(rec, req)
+
+			if rec.Code != tt.wantStatus {
+				t.Fatalf("expected status %d, got %d: %s", tt.wantStatus, rec.Code, rec.Body.String())
+			}
+			if tt.wantDecision == "" {
+				return
+			}
+			var resp SecurityOffloadSimulationResponse
+			if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+				t.Fatalf("failed to decode simulation response: %v", err)
+			}
+			if resp.Decision != tt.wantDecision {
+				t.Errorf("expected decision %s, got %s", tt.wantDecision, resp.Decision)
+			}
+			if resp.Mode != "SIMULATION" {
+				t.Errorf("expected SIMULATION mode, got %s", resp.Mode)
+			}
+			if tt.name == "SYN flood threat" && resp.ThreatClass != "Volumetric SYN flood" {
+				t.Errorf("unexpected threat class: %s", resp.ThreatClass)
+			}
+		})
+	}
+}
+
 func TestContentNegotiation(t *testing.T) {
 	mux := setupTestServer()
 

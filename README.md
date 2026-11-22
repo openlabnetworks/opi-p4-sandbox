@@ -100,6 +100,31 @@ Prefer a graphical interface? The sandbox includes a built-in, lightweight **Web
 
 Learn about the platform's use cases and architecture at [`http://localhost:8080/about`](http://localhost:8080/about).
 
+Explore the hardware-security simulation at [`http://localhost:8080/security`](http://localhost:8080/security).
+
+### Test hardware security from the terminal
+
+The security page uses the same REST API available from curl:
+
+```bash
+curl -sS -X POST http://localhost:8080/api/v1/security/offload/simulations \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "source_namespace": "internet",
+    "destination_namespace": "payments",
+    "protocol": "TCP",
+    "destination_port": 443,
+    "policy_action": "allow",
+    "attack_type": "syn_flood"
+  }' | jq
+```
+
+Supported `attack_type` values are `normal`, `syn_flood`, `port_scan`,
+`dns_amplification`, `lateral_movement`, `malformed_packet`, and `ddos_http`.
+The endpoint validates namespace names, protocol, port, policy action, and
+threat scenario. It returns a modeled P4 ACL entry and `DENY` or `ALLOW`
+decision; it does not currently program BMv2 or connect to physical DPU hardware.
+
 ### Key Features
 
 - 🎨 **Minimalist Light & Brutalist Design**: High-contrast, Swiss editorial typography, architectural grid canvas, and cobalt hardware passport card.

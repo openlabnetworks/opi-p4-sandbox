@@ -67,9 +67,10 @@ const dashboardHTML = `<!DOCTYPE html>
       background: var(--bg);
       border-bottom: 1px solid var(--line-dark);
       padding: 20px 48px;
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: minmax(220px,1fr) auto minmax(220px,1fr);
       align-items: center;
+      gap: 24px;
     }
 
     .brand {
@@ -91,6 +92,7 @@ const dashboardHTML = `<!DOCTYPE html>
 
     nav.site-nav {
       display: flex;
+      justify-content: center;
       gap: 36px;
       font-family: var(--font-mono);
       font-size: 11px;
@@ -104,6 +106,11 @@ const dashboardHTML = `<!DOCTYPE html>
     }
     nav.site-nav a:hover {
       color: var(--ink);
+    }
+    nav.site-nav a.active { color: var(--ink); }
+    header.site-header > div:last-child {
+      display: flex;
+      justify-content: flex-end;
     }
 
     .btn {
@@ -631,11 +638,12 @@ const dashboardHTML = `<!DOCTYPE html>
 
     @media (max-width: 920px) {
       header.site-header {
-        flex-wrap: wrap;
+        grid-template-columns: minmax(0,1fr) auto;
         gap: 16px 24px;
       }
       nav.site-nav {
-        order: 3;
+        grid-column: 1 / -1;
+        grid-row: 2;
         width: 100%;
         justify-content: flex-start;
         overflow-x: auto;
@@ -860,12 +868,13 @@ const dashboardHTML = `<!DOCTYPE html>
 
   <!-- Minimal Nav -->
   <header class="site-header">
-    <a href="https://www.openlabnetworks.com/" class="brand" target="_blank" rel="noopener noreferrer">
+    <a href="/ui" class="brand">
       <span>PROTONNIC SANDBOX</span>
     </a>
     <nav class="site-nav">
+      <a href="/ui" class="active">Workbench</a>
       <a href="/about">About</a>
-      <a href="/security">Security</a>
+      <a href="/security">Hardware Security</a>
     </nav>
     <div>
       <button class="btn btn-sm" onclick="runSmokeTest()">
@@ -1150,119 +1159,22 @@ const dashboardHTML = `<!DOCTYPE html>
     <!-- TAB 6: SECURITY -->
     <div class="tab-pane" id="pane-security">
       <div class="pane-toolbar">
-        <div class="pane-desc">Defense Layer Simulation &bull; Attack Traversal</div>
+        <div class="pane-desc">Hardware Security &bull; Offload Architecture</div>
         <div style="display:flex; gap:8px;">
-          <a class="btn btn-ghost btn-sm" href="/security">Full Report &rarr;</a>
+          <a class="btn btn-ghost btn-sm" href="/security">Open Hardware Security &rarr;</a>
         </div>
       </div>
-
       <div class="sim-strip">
-        <div class="field-box">
-          <label>Attack Scenario</label>
-          <select id="sec-attack">
-            <option value="syn_flood">SYN Flood (10K pps)</option>
-            <option value="http_flood">HTTP Flood (Slowloris)</option>
-            <option value="brute_force">API Key Brute Force</option>
-            <option value="malicious_p4">Malicious P4 Upload</option>
-            <option value="port_scan">Port Scan (nmap)</option>
-            <option value="normal">Normal API Request</option>
-          </select>
-        </div>
-        <div class="field-box">
-          <label>Source IP</label>
-          <input type="text" id="sec-source" value="203.0.113.42">
-        </div>
-        <div class="field-box">
-          <label>Target</label>
-          <select id="sec-target">
-            <option value="api">REST API :443</option>
-            <option value="grpc">P4Runtime :9559</option>
-            <option value="ssh">SSH :22</option>
-          </select>
-        </div>
-        <div>
-          <button class="btn btn-sm" style="height:36px;" onclick="runSecuritySim()">
-            <span>Simulate</span>
-            <span class="btn-circle-arrow">&rarr;</span>
-          </button>
-        </div>
+        <div class="field-box"><label>Kubernetes policy</label><input value="NetworkPolicy / Cilium" readonly></div>
+        <div class="field-box"><label>Control plane</label><input value="OPI / gRPC" readonly></div>
+        <div class="field-box"><label>Datapath</label><input value="P4 Match-Action" readonly></div>
+        <div><a class="btn btn-sm" style="height:36px;" href="/security#simulator">Run Attack Model &rarr;</a></div>
       </div>
-
-      <div class="sim-stages-row" style="grid-template-columns: repeat(4, 1fr) auto;">
-        <div class="stage-item" id="sec-stage-1">
-          <div class="stage-idx">LAYER 01</div>
-          <div class="stage-label">nftables</div>
-          <div class="stage-caption">Firewall</div>
-        </div>
-        <div class="stage-item" id="sec-stage-2">
-          <div class="stage-idx">LAYER 02</div>
-          <div class="stage-label">nginx</div>
-          <div class="stage-caption">Reverse Proxy</div>
-        </div>
-        <div class="stage-item" id="sec-stage-3">
-          <div class="stage-idx">LAYER 03</div>
-          <div class="stage-label">Auth</div>
-          <div class="stage-caption">fail2ban</div>
-        </div>
-        <div class="stage-item" id="sec-stage-4">
-          <div class="stage-idx">LAYER 04</div>
-          <div class="stage-label">Container</div>
-          <div class="stage-caption">Sandbox Jail</div>
-        </div>
-        <div class="stage-item" id="sec-stage-5">
-          <div class="stage-idx">TARGET</div>
-          <div class="stage-label">OPI</div>
-          <div class="stage-caption">Application</div>
-        </div>
-      </div>
-
-      <div class="sim-banner" id="sec-banner"></div>
-
-      <!-- Defense layer summary table -->
-      <div style="margin-top:32px; border-top:1px solid var(--line); padding-top:24px;">
-        <div class="pane-desc" style="margin-bottom:16px;">Active Defense Layers &bull; Status</div>
-        <table class="min-table">
-          <thead>
-            <tr>
-              <th>Layer</th>
-              <th>Component</th>
-              <th>Function</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>01</strong></td>
-              <td>nftables</td>
-              <td>Default-deny firewall, per-IP connection limits, SYN cookies</td>
-              <td><span class="tag-state" style="background:#fff8e1; color:#e65100; border-color:#ffcc80;">PLANNED</span></td>
-            </tr>
-            <tr>
-              <td><strong>02</strong></td>
-              <td>nginx</td>
-              <td>TLS termination, rate limits, body size caps, timeouts</td>
-              <td><span class="tag-state" style="background:#fff8e1; color:#e65100; border-color:#ffcc80;">PLANNED</span></td>
-            </tr>
-            <tr>
-              <td><strong>03</strong></td>
-              <td>Auth + fail2ban</td>
-              <td>API key enforcement, per-key quotas, automatic IP bans</td>
-              <td><span class="tag-state" style="background:#fff8e1; color:#e65100; border-color:#ffcc80;">PLANNED</span></td>
-            </tr>
-            <tr>
-              <td><strong>04</strong></td>
-              <td>Container jail</td>
-              <td>CPU/memory/time caps, P4 compiles in network-less jail</td>
-              <td><span class="tag-state" style="background:#fff8e1; color:#e65100; border-color:#ffcc80;">PLANNED</span></td>
-            </tr>
-            <tr>
-              <td><strong>&mdash;</strong></td>
-              <td>Monitoring</td>
-              <td>Metrics, threshold alerts, uptime checks</td>
-              <td><span class="tag-state" style="background:#fff8e1; color:#e65100; border-color:#ffcc80;">PLANNED</span></td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="sim-stages-row" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="stage-item"><div class="stage-idx">01 / INTENT</div><div class="stage-label">NetworkPolicy</div><div class="stage-caption">Workload identity</div></div>
+        <div class="stage-item"><div class="stage-idx">02 / CONTROL</div><div class="stage-label">OPI / gRPC</div><div class="stage-caption">Policy compiler</div></div>
+        <div class="stage-item"><div class="stage-idx">03 / DATAPATH</div><div class="stage-label">P4 ACL</div><div class="stage-caption">Line-rate match</div></div>
+        <div class="stage-item"><div class="stage-idx">04 / RESULT</div><div class="stage-label">SmartNIC</div><div class="stage-caption">Allow or drop</div></div>
       </div>
     </div>
   </section>
@@ -1313,8 +1225,8 @@ const dashboardHTML = `<!DOCTYPE html>
 
   <!-- Minimal Footer -->
   <footer class="site-footer">
-    <a href="https://www.openlabnetworks.com/" target="_blank" rel="noopener noreferrer">OPENLABNETWORKS</a>
-    <div>DPU &bull; SMARTNIC &bull; HARDWARE OFFLOAD</div>
+    <span>PROTONNIC SANDBOX &bull; DPU &amp; SMARTNIC ENABLEMENT</span>
+    <span>SOFTWARE MODEL &bull; HARDWARE READY</span>
   </footer>
 
   <script>
@@ -1573,74 +1485,6 @@ const dashboardHTML = `<!DOCTYPE html>
       fetchPorts();
     }
 
-    // Security Attack Simulator
-    var secScenarios = {
-      syn_flood:    { block: 1, verdict: 'BLOCKED', msg: 'SYN flood detected. nftables dropped packets via SYN cookies and per-IP connection limit.' },
-      http_flood:   { block: 2, verdict: 'BLOCKED', msg: 'HTTP slowloris pattern detected. nginx closed connection due to request timeout and rate limit exceeded.' },
-      brute_force:  { block: 3, verdict: 'BLOCKED', msg: 'Repeated invalid API key attempts. fail2ban banned source IP after 5 failed authentications.' },
-      malicious_p4: { block: 4, verdict: 'CONTAINED', msg: 'Oversized P4 program upload. Container sandbox rejected: file exceeds 1MB limit, compile jail has no network access.' },
-      port_scan:    { block: 1, verdict: 'BLOCKED', msg: 'Port scan detected. nftables default-deny policy dropped probes. Only ports 80 and 443 are open.' },
-      normal:       { block: 0, verdict: 'ALLOWED', msg: 'Valid API request with authenticated key. All layers passed. Request reached OPI server successfully.' }
-    };
-
-    async function runSecuritySim() {
-      var attack = document.getElementById('sec-attack').value;
-      var target = document.getElementById('sec-target').value;
-      var scenario = secScenarios[attack];
-      var banner = document.getElementById('sec-banner');
-      banner.style.display = 'none';
-
-      // If targeting internal port, always block at layer 1
-      if (target === 'grpc' || target === 'ssh') {
-        scenario = { block: 1, verdict: 'BLOCKED', msg: 'Connection refused. nftables default-deny policy: port ' + (target === 'grpc' ? '9559' : '22') + ' is not exposed to the internet.' };
-      }
-
-      var totalStages = 5;
-      var blockAt = scenario.block;
-
-      for (var i = 1; i <= totalStages; i++) {
-        var el = document.getElementById('sec-stage-' + i);
-        el.classList.add('lit');
-        await new Promise(function(r) { setTimeout(r, 220); });
-        if (blockAt > 0 && i === blockAt) {
-          // Stay lit on blocking layer (red highlight)
-          el.style.background = '#ef4444';
-          el.style.borderColor = '#dc2626';
-          break;
-        }
-        if (i < totalStages || blockAt === 0) {
-          el.classList.remove('lit');
-        }
-      }
-
-      // If normal traffic, light up the target green
-      if (blockAt === 0) {
-        var last = document.getElementById('sec-stage-5');
-        last.style.background = '#10b981';
-        last.style.borderColor = '#059669';
-        last.classList.add('lit');
-      }
-
-      banner.style.display = 'block';
-      if (scenario.verdict === 'ALLOWED') {
-        banner.className = 'sim-banner pass';
-        banner.innerHTML = '<strong>[' + scenario.verdict + ']</strong> ' + scenario.msg;
-      } else {
-        banner.className = 'sim-banner drop';
-        banner.innerHTML = '<strong>[' + scenario.verdict + ']</strong> ' + scenario.msg;
-      }
-
-      // Reset stages after 3 seconds
-      setTimeout(function() {
-        for (var j = 1; j <= totalStages; j++) {
-          var s = document.getElementById('sec-stage-' + j);
-          s.classList.remove('lit');
-          s.style.background = '';
-          s.style.borderColor = '';
-        }
-      }, 3000);
-    }
-
     window.addEventListener('DOMContentLoaded', function() {
       fetchPorts();
       fetchPipelines();
@@ -1666,57 +1510,75 @@ const aboutHTML = `<!DOCTYPE html>
   <title>About | ProtonNIC Sandbox</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --ink: #102022;
-      --muted: #587074;
-      --line: #c9d7d3;
-      --paper: #f4f8f5;
-      --card: #ffffff;
-      --accent: #d96b3b;
-      --teal: #0e7771;
-      --mono: "DM Mono", monospace;
-      --sans: "Manrope", sans-serif;
+      --bg: #f4f5f7;
+      --ink: #111111;
+      --muted: #666666;
+      --line: #e2e4e8;
+      --cobalt: #2563eb;
+      --display: "Space Grotesk", sans-serif;
+      --body: "Inter", sans-serif;
+      --mono: "JetBrains Mono", monospace;
     }
-    * { box-sizing: border-box; }
-    body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(--sans); }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      color: var(--ink);
+      background-color: var(--bg);
+      background-image: linear-gradient(to right, rgba(0,0,0,.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      font-family: var(--body);
+    }
     a { color: inherit; }
-    .about-nav { display: flex; justify-content: space-between; align-items: center; padding: 24px 7vw; border-bottom: 1px solid var(--line); }
-    .logo { text-decoration: none; font-weight: 800; letter-spacing: -.04em; }
-    .logo span { color: var(--accent); }
-    .back { font: 12px var(--mono); text-transform: uppercase; text-decoration: none; color: var(--muted); }
-    .about-main { max-width: 1180px; margin: 0 auto; padding: 84px 7vw 110px; }
-    .eyebrow { color: var(--teal); font: 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
-    h1 { max-width: 800px; margin: 18px 0 24px; font-size: clamp(48px, 8vw, 104px); line-height: .96; letter-spacing: -.07em; }
-    .intro { max-width: 680px; color: var(--muted); font-size: 20px; line-height: 1.65; }
-    .section { margin-top: 100px; }
-    h2 { margin: 0 0 14px; font-size: 34px; letter-spacing: -.05em; }
+    .about-nav {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 20px 48px;
+      border-bottom: 1px solid var(--ink);
+    }
+    .logo { font: 900 16px var(--display); letter-spacing: -.03em; text-decoration: none; text-transform: uppercase; }
+    .nav-links { display: flex; gap: 36px; font: 11px var(--mono); text-transform: uppercase; letter-spacing: .1em; }
+    .nav-links a { color: var(--muted); text-decoration: none; }
+    .nav-links a:hover, .nav-links a.active { color: var(--ink); }
+    .about-main { max-width: 1400px; margin: 0 auto; padding: 68px 48px 100px; }
+    .eyebrow { color: var(--muted); font: 10px var(--mono); letter-spacing: .15em; text-transform: uppercase; }
+    h1 { max-width: 980px; margin: 18px 0 24px; font: 900 clamp(52px, 8vw, 112px)/.86 var(--display); letter-spacing: -.07em; text-transform: uppercase; }
+    .intro { max-width: 760px; color: var(--muted); font-size: 16px; line-height: 1.75; }
+    .section { margin-top: 82px; }
+    h2 { margin: 10px 0 14px; font: 900 clamp(31px,4vw,54px)/.95 var(--display); letter-spacing: -.055em; text-transform: uppercase; }
     .section-lead { max-width: 650px; color: var(--muted); line-height: 1.7; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
-    .card { padding: 28px; min-height: 220px; background: var(--card); border: 1px solid var(--line); }
-    .number { color: var(--accent); font: 13px var(--mono); }
-    h3 { margin: 38px 0 10px; font-size: 21px; letter-spacing: -.03em; }
+    .grid { display: grid; grid-template-columns: repeat(3,1fr); margin-top: 32px; border-top: 1px solid var(--ink); border-left: 1px solid var(--ink); }
+    .card { min-height: 220px; padding: 23px; background: rgba(255,255,255,.58); border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
+    .card:hover { background: #fff; }
+    .number { color: var(--cobalt); font: 10px var(--mono); letter-spacing: .12em; }
+    h3 { margin: 38px 0 10px; font: 700 21px/1 var(--display); letter-spacing: -.04em; text-transform: uppercase; }
     .card p, .architecture p { color: var(--muted); line-height: 1.65; }
     .architecture { display: grid; grid-template-columns: .85fr 1.15fr; gap: 48px; align-items: start; }
-    .stack { border-left: 2px solid var(--accent); }
-    .layer { padding: 19px 22px; border-bottom: 1px solid var(--line); background: var(--card); }
+    .stack { border: 1px solid var(--ink); background: #111215; }
+    .layer { padding: 19px 22px; border-bottom: 1px solid #34363e; color: #fff; }
+    .layer:last-child { border-bottom: 0; }
     .layer strong { display: block; margin-bottom: 5px; }
-    .layer span { color: var(--muted); font: 12px var(--mono); }
-    .about-footer { padding: 26px 7vw; border-top: 1px solid var(--line); color: var(--muted); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    .layer span { color: #9da3af; font: 11px var(--mono); }
+    .about-footer { display: flex; justify-content: space-between; gap: 20px; padding: 25px 48px; border-top: 1px solid var(--ink); color: var(--muted); font: 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
     @media (max-width: 760px) {
-      .about-nav { padding: 20px; }
-      .about-main { padding: 60px 20px 80px; }
+      .about-nav { padding: 17px 20px; }
+      .nav-links { gap: 16px; font-size: 10px; }
+      .about-main { padding: 52px 20px 70px; }
+      h1 { font-size: 58px; }
       .grid, .architecture { grid-template-columns: 1fr; }
       .section { margin-top: 70px; }
+      .about-footer { flex-direction: column; padding: 22px 20px; }
     }
   </style>
 </head>
 <body>
   <header class="about-nav">
-    <a class="logo" href="/ui">ProtonNIC Sandbox</a>
-    <a class="back" href="/ui">&larr; ProtonNIC sandbox</a>
-    <a class="back" href="/security">Security</a>
+    <a class="logo" href="/ui">PROTONNIC SANDBOX</a>
+    <nav class="nav-links"><a href="/ui">Workbench</a><a class="active" href="/about">About</a><a href="/security">Hardware Security</a></nav>
   </header>
   <main class="about-main">
     <div class="eyebrow">ProtonNIC Sandbox / Core use cases</div>
@@ -1747,7 +1609,7 @@ const aboutHTML = `<!DOCTYPE html>
       </div>
     </section>
   </main>
-  <footer class="about-footer">ProtonNIC Sandbox &bull; DPU and SmartNIC enablement</footer>
+  <footer class="about-footer"><span>PROTONNIC SANDBOX &bull; DPU &amp; SMARTNIC ENABLEMENT</span><span>SOFTWARE MODEL &bull; HARDWARE READY</span></footer>
 </body>
 </html>
 `
