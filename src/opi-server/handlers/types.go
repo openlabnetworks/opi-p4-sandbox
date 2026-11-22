@@ -80,3 +80,30 @@ type APIInfoResponse struct {
 	Services []string `json:"services"`
 	DocsURL  string   `json:"docs_url"`
 }
+
+// SecurityOffloadSimulationRequest models a Kubernetes policy decision that
+// would be translated into a SmartNIC/DPU P4 ACL entry in a production system.
+// It never changes the local BMv2 or any host networking configuration.
+type SecurityOffloadSimulationRequest struct {
+	SourceNamespace      string `json:"source_namespace"`
+	DestinationNamespace string `json:"destination_namespace"`
+	Protocol             string `json:"protocol"`
+	DestinationPort      int32  `json:"destination_port"`
+	PolicyAction         string `json:"policy_action"`
+	AttackType           string `json:"attack_type"`
+}
+
+// SecurityOffloadSimulationResponse explains the modeled control-plane and
+// datapath path for a Kubernetes-to-SmartNIC security offload decision.
+type SecurityOffloadSimulationResponse struct {
+	Mode             string   `json:"mode"`
+	Decision         string   `json:"decision"`
+	EnforcementPoint string   `json:"enforcement_point"`
+	P4TableEntry     string   `json:"p4_table_entry"`
+	ControlPlane     []string `json:"control_plane"`
+	Datapath         []string `json:"datapath"`
+	HostCPUImpact    string   `json:"host_cpu_impact"`
+	ThreatClass      string   `json:"threat_class"`
+	Details          string   `json:"details"`
+	Disclaimer       string   `json:"disclaimer"`
+}

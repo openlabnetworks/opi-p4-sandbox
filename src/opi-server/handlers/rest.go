@@ -82,6 +82,16 @@ func RegisterRESTRoutes(mux *http.ServeMux, netSvc *NetworkService, pipeSvc *Pip
 }
 
 func registerAPIResourceRoutes(mux *http.ServeMux, basePath string, netSvc *NetworkService, pipeSvc *PipelineService) {
+	// Kubernetes-to-SmartNIC security offload model. This evaluates a safe,
+	// deterministic simulation; it does not configure BMv2 or host networking.
+	mux.HandleFunc(basePath+"/security/offload/simulations", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		handleSecurityOffloadSimulation(w, r)
+	})
+
 	// Network service
 	mux.HandleFunc(basePath+"/ports", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
