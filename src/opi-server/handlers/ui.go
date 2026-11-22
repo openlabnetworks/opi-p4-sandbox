@@ -864,12 +864,8 @@ const dashboardHTML = `<!DOCTYPE html>
       <span>PROTONNIC SANDBOX</span>
     </a>
     <nav class="site-nav">
-      <a href="javascript:void(0)" onclick="selectTab('ports')">Ports</a>
-      <a href="javascript:void(0)" onclick="selectTab('pipelines')">Pipelines</a>
-      <a href="javascript:void(0)" onclick="selectTab('simulator')">Offload Lab</a>
-      <a href="javascript:void(0)" onclick="selectTab('console')">APIs</a>
-      <a href="javascript:void(0)" onclick="selectTab('ami')">AMI</a>
       <a href="/about">About</a>
+      <a href="/security">Security</a>
     </nav>
     <div>
       <button class="btn btn-sm" onclick="runSmokeTest()">
@@ -967,6 +963,7 @@ const dashboardHTML = `<!DOCTYPE html>
         <button class="tab-btn" id="tab-btn-simulator" onclick="selectTab('simulator')">03 Offload Lab</button>
         <button class="tab-btn" id="tab-btn-console" onclick="selectTab('console')">04 REST Console</button>
         <button class="tab-btn" id="tab-btn-ami" onclick="selectTab('ami')">05 AWS AMI</button>
+        <button class="tab-btn" id="tab-btn-security" onclick="selectTab('security')">06 Security</button>
       </div>
     </div>
 
@@ -1147,6 +1144,125 @@ const dashboardHTML = `<!DOCTYPE html>
 
       <div style="font-family:var(--font-mono); font-size:11px; color:var(--ink-muted);">
         A pre-baked image provides a self-contained ProtonNIC development environment.
+      </div>
+    </div>
+
+    <!-- TAB 6: SECURITY -->
+    <div class="tab-pane" id="pane-security">
+      <div class="pane-toolbar">
+        <div class="pane-desc">Defense Layer Simulation &bull; Attack Traversal</div>
+        <div style="display:flex; gap:8px;">
+          <a class="btn btn-ghost btn-sm" href="/security">Full Report &rarr;</a>
+        </div>
+      </div>
+
+      <div class="sim-strip">
+        <div class="field-box">
+          <label>Attack Scenario</label>
+          <select id="sec-attack">
+            <option value="syn_flood">SYN Flood (10K pps)</option>
+            <option value="http_flood">HTTP Flood (Slowloris)</option>
+            <option value="brute_force">API Key Brute Force</option>
+            <option value="malicious_p4">Malicious P4 Upload</option>
+            <option value="port_scan">Port Scan (nmap)</option>
+            <option value="normal">Normal API Request</option>
+          </select>
+        </div>
+        <div class="field-box">
+          <label>Source IP</label>
+          <input type="text" id="sec-source" value="203.0.113.42">
+        </div>
+        <div class="field-box">
+          <label>Target</label>
+          <select id="sec-target">
+            <option value="api">REST API :443</option>
+            <option value="grpc">P4Runtime :9559</option>
+            <option value="ssh">SSH :22</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn btn-sm" style="height:36px;" onclick="runSecuritySim()">
+            <span>Simulate</span>
+            <span class="btn-circle-arrow">&rarr;</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sim-stages-row" style="grid-template-columns: repeat(4, 1fr) auto;">
+        <div class="stage-item" id="sec-stage-1">
+          <div class="stage-idx">LAYER 01</div>
+          <div class="stage-label">nftables</div>
+          <div class="stage-caption">Firewall</div>
+        </div>
+        <div class="stage-item" id="sec-stage-2">
+          <div class="stage-idx">LAYER 02</div>
+          <div class="stage-label">nginx</div>
+          <div class="stage-caption">Reverse Proxy</div>
+        </div>
+        <div class="stage-item" id="sec-stage-3">
+          <div class="stage-idx">LAYER 03</div>
+          <div class="stage-label">Auth</div>
+          <div class="stage-caption">fail2ban</div>
+        </div>
+        <div class="stage-item" id="sec-stage-4">
+          <div class="stage-idx">LAYER 04</div>
+          <div class="stage-label">Container</div>
+          <div class="stage-caption">Sandbox Jail</div>
+        </div>
+        <div class="stage-item" id="sec-stage-5">
+          <div class="stage-idx">TARGET</div>
+          <div class="stage-label">OPI</div>
+          <div class="stage-caption">Application</div>
+        </div>
+      </div>
+
+      <div class="sim-banner" id="sec-banner"></div>
+
+      <!-- Defense layer summary table -->
+      <div style="margin-top:32px; border-top:1px solid var(--line); padding-top:24px;">
+        <div class="pane-desc" style="margin-bottom:16px;">Active Defense Layers &bull; Status</div>
+        <table class="min-table">
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Component</th>
+              <th>Function</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>01</strong></td>
+              <td>nftables</td>
+              <td>Default-deny firewall, per-IP connection limits, SYN cookies</td>
+              <td><span class="tag-state" style="background:#fff8e1; color:#e65100; border-color:#ffcc80;">PLANNED</span></td>
+            </tr>
+            <tr>
+              <td><strong>02</strong></td>
+              <td>nginx</td>
+              <td>TLS termination, rate limits, body size caps, timeouts</td>
+              <td><span class="tag-state" style="background:#fff8e1; color:#e65100; border-color:#ffcc80;">PLANNED</span></td>
+            </tr>
+            <tr>
+              <td><strong>03</strong></td>
+              <td>Auth + fail2ban</td>
+              <td>API key enforcement, per-key quotas, automatic IP bans</td>
+              <td><span class="tag-state" style="background:#fff8e1; color:#e65100; border-color:#ffcc80;">PLANNED</span></td>
+            </tr>
+            <tr>
+              <td><strong>04</strong></td>
+              <td>Container jail</td>
+              <td>CPU/memory/time caps, P4 compiles in network-less jail</td>
+              <td><span class="tag-state" style="background:#fff8e1; color:#e65100; border-color:#ffcc80;">PLANNED</span></td>
+            </tr>
+            <tr>
+              <td><strong>&mdash;</strong></td>
+              <td>Monitoring</td>
+              <td>Metrics, threshold alerts, uptime checks</td>
+              <td><span class="tag-state" style="background:#fff8e1; color:#e65100; border-color:#ffcc80;">PLANNED</span></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </section>
@@ -1457,6 +1573,74 @@ const dashboardHTML = `<!DOCTYPE html>
       fetchPorts();
     }
 
+    // Security Attack Simulator
+    var secScenarios = {
+      syn_flood:    { block: 1, verdict: 'BLOCKED', msg: 'SYN flood detected. nftables dropped packets via SYN cookies and per-IP connection limit.' },
+      http_flood:   { block: 2, verdict: 'BLOCKED', msg: 'HTTP slowloris pattern detected. nginx closed connection due to request timeout and rate limit exceeded.' },
+      brute_force:  { block: 3, verdict: 'BLOCKED', msg: 'Repeated invalid API key attempts. fail2ban banned source IP after 5 failed authentications.' },
+      malicious_p4: { block: 4, verdict: 'CONTAINED', msg: 'Oversized P4 program upload. Container sandbox rejected: file exceeds 1MB limit, compile jail has no network access.' },
+      port_scan:    { block: 1, verdict: 'BLOCKED', msg: 'Port scan detected. nftables default-deny policy dropped probes. Only ports 80 and 443 are open.' },
+      normal:       { block: 0, verdict: 'ALLOWED', msg: 'Valid API request with authenticated key. All layers passed. Request reached OPI server successfully.' }
+    };
+
+    async function runSecuritySim() {
+      var attack = document.getElementById('sec-attack').value;
+      var target = document.getElementById('sec-target').value;
+      var scenario = secScenarios[attack];
+      var banner = document.getElementById('sec-banner');
+      banner.style.display = 'none';
+
+      // If targeting internal port, always block at layer 1
+      if (target === 'grpc' || target === 'ssh') {
+        scenario = { block: 1, verdict: 'BLOCKED', msg: 'Connection refused. nftables default-deny policy: port ' + (target === 'grpc' ? '9559' : '22') + ' is not exposed to the internet.' };
+      }
+
+      var totalStages = 5;
+      var blockAt = scenario.block;
+
+      for (var i = 1; i <= totalStages; i++) {
+        var el = document.getElementById('sec-stage-' + i);
+        el.classList.add('lit');
+        await new Promise(function(r) { setTimeout(r, 220); });
+        if (blockAt > 0 && i === blockAt) {
+          // Stay lit on blocking layer (red highlight)
+          el.style.background = '#ef4444';
+          el.style.borderColor = '#dc2626';
+          break;
+        }
+        if (i < totalStages || blockAt === 0) {
+          el.classList.remove('lit');
+        }
+      }
+
+      // If normal traffic, light up the target green
+      if (blockAt === 0) {
+        var last = document.getElementById('sec-stage-5');
+        last.style.background = '#10b981';
+        last.style.borderColor = '#059669';
+        last.classList.add('lit');
+      }
+
+      banner.style.display = 'block';
+      if (scenario.verdict === 'ALLOWED') {
+        banner.className = 'sim-banner pass';
+        banner.innerHTML = '<strong>[' + scenario.verdict + ']</strong> ' + scenario.msg;
+      } else {
+        banner.className = 'sim-banner drop';
+        banner.innerHTML = '<strong>[' + scenario.verdict + ']</strong> ' + scenario.msg;
+      }
+
+      // Reset stages after 3 seconds
+      setTimeout(function() {
+        for (var j = 1; j <= totalStages; j++) {
+          var s = document.getElementById('sec-stage-' + j);
+          s.classList.remove('lit');
+          s.style.background = '';
+          s.style.borderColor = '';
+        }
+      }, 3000);
+    }
+
     window.addEventListener('DOMContentLoaded', function() {
       fetchPorts();
       fetchPipelines();
@@ -1532,6 +1716,7 @@ const aboutHTML = `<!DOCTYPE html>
   <header class="about-nav">
     <a class="logo" href="/ui">ProtonNIC Sandbox</a>
     <a class="back" href="/ui">&larr; ProtonNIC sandbox</a>
+    <a class="back" href="/security">Security</a>
   </header>
   <main class="about-main">
     <div class="eyebrow">ProtonNIC Sandbox / Core use cases</div>
